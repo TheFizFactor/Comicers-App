@@ -17,15 +17,11 @@ import {
   TrackScoreFormat,
   TrackStatus,
 } from '@/common/models/types';
-import { formDataFromObject } from '@/main/util/net';
 import { MALTrackerMetadata } from '@/common/temp_tracker_metadata';
 
-// MyAnimeList API configuration
 const CLIENT_ID = 'da33fd0a72e2c77f1b30552407ca5ed2';
 const BASE_URL = 'https://api.myanimelist.net/v2';
 const OAUTH_BASE_URL = 'https://myanimelist.net/v1/oauth2';
-// This redirect URI must match what you have registered in the MyAnimeList API panel
-const REDIRECT_URI = 'http://localhost';
 
 const STATUS_MAP: { [key: string]: TrackStatus } = {
   reading: TrackStatus.Reading,
@@ -33,13 +29,6 @@ const STATUS_MAP: { [key: string]: TrackStatus } = {
   completed: TrackStatus.Completed,
   dropped: TrackStatus.Dropped,
   on_hold: TrackStatus.Paused,
-};
-
-type TokenResponseData = {
-  token_type: 'Bearer';
-  expires_in: number;
-  access_token: string;
-  refresh_token: string;
 };
 
 type UserResponseData = {
@@ -127,7 +116,6 @@ type UpdateMangaResponseData = {
 
 export class MALTrackerClient extends TrackerClientAbstract {
   userId: string;
-
   latestPkceCode: { code_challenge: string; code_verifier: string } | undefined;
 
   constructor(accessToken = '') {
@@ -141,43 +129,91 @@ export class MALTrackerClient extends TrackerClientAbstract {
   };
 
   getAuthUrl: GetAuthUrlFunc = () => {
-    const pkceCode: { code_challenge: string; code_verifier: string } = pkceChallenge();
+    // Generate PKCE challenge with shorter code length for better compatibility
+    const pkceCode = pkceChallenge(43); // 43 characters is the recommended length
     this.latestPkceCode = pkceCode;
-    return `${OAUTH_BASE_URL}/authorize?client_id=${CLIENT_ID}&code_challenge=${pkceCode.code_challenge}&code_challenge_method=plain&response_type=code&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
-  };
+    
+    console.debug('[MAL Auth] Generated PKCE challenge:', {
+      code_challenge: pkceCode.code_challenge,
+      code_verifier: pkceCode.code_verifier
+    });
 
-  getToken: GetTokenFunc = (code: string) => {
-    if (!this.latestPkceCode) return new Promise((resolve) => resolve(null));
-
-    const url = `${OAUTH_BASE_URL}/token`;
-    const options = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Accept: 'application/json',
-      },
-      body: formDataFromObject({
-        client_id: CLIENT_ID,
-        code,
-        code_verifier: this.latestPkceCode.code_verifier,
-        grant_type: 'authorization_code',
-        redirect_uri: REDIRECT_URI,
-      }),
+    // Build the auth URL with properly encoded parameters
+    const params = {
+      response_type: 'code',
+      client_id: CLIENT_ID,
+      code_challenge: pkceCode.code_challenge,
+      code_challenge_method: 'plain',
+      redirect_uri: 'https://comicers.org'
     };
 
-    return fetch(url, options)
-      .then((response) => response.json())
-      .then((data: TokenResponseData) => {
-        if ('error' in data) {
-          console.error('Error getting token from MAL:', data);
+    const queryString = Object.entries(params)
+      .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+      .join('&');
+
+    return `${OAUTH_BASE_URL}/authorize?${queryString}`;
+  };
+
+  getToken: GetTokenFunc = async (code: string) => {
+    if (!this.latestPkceCode) {
+      console.error('[MAL Auth] No PKCE code available for token request');
+      return null;
+    }
+
+    console.debug('[MAL Auth] Starting token request with:', {
+      code,
+      code_verifier: this.latestPkceCode.code_verifier
+    });
+
+    const url = `${OAUTH_BASE_URL}/token`;
+    
+    // Create form data with the exact parameters MAL expects
+    const formData = new URLSearchParams({
+      client_id: CLIENT_ID,
+      code: code,
+      code_verifier: this.latestPkceCode.code_verifier,
+      grant_type: 'authorization_code'
+    });
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: formData.toString()
+      });
+
+      const text = await response.text();
+      console.debug('[MAL Auth] Token response:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers),
+        body: text
+      });
+
+      if (!response.ok) {
+        console.error('[MAL Auth] Token request failed:', response.status, text);
+        return null;
+      }
+
+      try {
+        const data = JSON.parse(text);
+        if ('error' in data || !data.access_token) {
+          console.error('[MAL Auth] Invalid token response:', data);
           return null;
         }
+        
+        console.debug('[MAL Auth] Successfully retrieved access token');
         return data.access_token;
-      })
-      .catch((e: Error) => {
-        console.error(e);
+      } catch (e) {
+        console.error('[MAL Auth] Failed to parse token response:', e);
         return null;
-      });
+      }
+    } catch (e) {
+      console.error('[MAL Auth] Token request network error:', e);
+      return null;
+    }
   };
 
   getUsername: GetUsernameFunc = () => {
