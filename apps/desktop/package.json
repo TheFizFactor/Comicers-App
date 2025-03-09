@@ -88,7 +88,7 @@
     "publish": {
       "provider": "github",
       "owner": "TheFizFactor",
-      "repo": "comicers"
+      "repo": "Comicers-App"
     }
   },
   "repository": {
