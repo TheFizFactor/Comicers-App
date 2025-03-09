@@ -25,7 +25,7 @@ export default {
     const data = { ...defaultRelease };
     
     try {
-      const response = await fetch('https://api.github.com/repos/TheFizFactor/comicers/releases/latest');
+      const response = await fetch('https://api.github.com/repos/TheFizFactor/Comicers-App/releases/latest');
       if (!response.ok) {
         return data;
       }

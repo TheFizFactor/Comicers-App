@@ -93,7 +93,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/TheFizFactor/comicers"
+    "url": "https://github.com/TheFizFactor/Comicers-App"
   },
   "author": {
     "name": "Arnis",
@@ -102,7 +102,7 @@
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/TheFizFactor/comicers/issues"
+    "url": "https://github.com/TheFizFactor/Comicers-App/issues"
   },
   "keywords": [
     "manga",

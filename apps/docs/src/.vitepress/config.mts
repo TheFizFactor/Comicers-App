@@ -22,7 +22,7 @@ export default defineConfig({
       },
       {
         text: 'Repository',
-        link: 'https://github.com/TheFizFactor/comicers',
+        link: 'https://github.com/TheFizFactor/Comicers-App',
       },
       {
         text: 'Guides',
@@ -43,7 +43,7 @@ export default defineConfig({
       },
     ],
 
-    socialLinks: [{ icon: 'github', link: 'https://github.com/TheFizFactor/comicers' }],
+    socialLinks: [{ icon: 'github', link: 'https://github.com/TheFizFactor/Comicers-App' }],
 
     search: {
       provider: 'local',

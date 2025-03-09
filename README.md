@@ -1,8 +1,8 @@
 [![comicers screenshot](assets/comicers_screenshot.webp)](https://comicers.org)
 
 [![comicers.org](https://img.shields.io/badge/website-comicers.org-7048E8?style=flat-square)](https://comicers.org)
-[![GitHub release](https://img.shields.io/github/v/release/TheFizFactor/comicers?style=flat-square)](https://github.com/TheFizFactor/comicers/releases)
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/TheFizFactor/comicers/publish.yml?branch=master&style=flat-square)
+[![GitHub release](https://img.shields.io/github/v/release/TheFizFactor/Comicers-App?style=flat-square)](https://github.com/TheFizFactor/Comicers-App/releases)
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/TheFizFactor/Comicers-App/publish.yml?branch=master&style=flat-square)
 
 Comicers is a free and open source manga reader for the desktop.
 
@@ -20,7 +20,7 @@ Comicers is a free and open source manga reader for the desktop.
 Download Comicers from [the official website](https://comicers.org/download).
 
 Alternatively, you can download manually from the
-[GitHub releases page](https://github.com/TheFizFactor/comicers/releases).
+[GitHub releases page](https://github.com/TheFizFactor/Comicers-App/releases).
 
 ## Documentation
 
@@ -65,4 +65,4 @@ To learn about Tiyo or request a new content source, please contact me at fiz@co
 
 ## License
 
-[MIT License](https://github.com/TheFizFactor/comicers/blob/master/LICENSE.txt)
+[MIT License](https://github.com/TheFizFactor/Comicers-App/blob/master/LICENSE.txt)

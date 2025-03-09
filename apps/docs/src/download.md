@@ -56,7 +56,7 @@ onMounted(async () => {
   </table>
   <p v-else>No downloads are currently available.</p>
   <blockquote>
-    <p>Additional versions are available from the <a href="https://github.com/TheFizFactor/comicers/releases">GitHub releases page</a>.</p>
+    <p>Additional versions are available from the <a href="https://github.com/TheFizFactor/Comicers-App/releases">GitHub releases page</a>.</p>
   </blockquote>
   <h2>Updating</h2>
   <p>Comicers checks for updates automatically when the client starts. You will be prompted when an update is available.</p>
