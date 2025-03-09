@@ -1,0 +1,16 @@
+{
+  "LIBRARY": {
+    "SERIES_LIST": "library.series_list",
+    "CHAPTER_LIST_PREFIX": "library.chapter_list.",
+    "CATEGORY_LIST": "library.category_list",
+    "READING_LISTS": "library.reading_lists"
+  },
+  "EXTENSION_SETTINGS_PREFIX": "extension-settings-",
+  "TRACKER_ACCESS_TOKEN_PREFIX": "tracker-access-token-",
+  "SETTINGS": {
+    "GENERAL_PREFIX": "settings.general.",
+    "READER_PREFIX": "settings.reader.",
+    "TRACKER_PREFIX": "settings.tracker.",
+    "INTEGRATION_PREFIX": "settings.integration."
+  }
+}

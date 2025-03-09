@@ -1,0 +1,166 @@
+name: Publish
+on:
+  push:
+    branches:
+      - main
+jobs:
+  publish-win:
+    strategy:
+      matrix:
+        node: ['22']
+        os: [windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.0.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+      # Cache electron binaries to speed up builds
+      - name: Cache Electron
+        uses: actions/cache@v3
+        with:
+          path: |
+            ${{ env.LOCALAPPDATA }}\electron\Cache
+            ${{ env.LOCALAPPDATA }}\electron-builder\Cache
+          key: ${{ runner.os }}-electron-cache-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-electron-cache-
+      # Windows-specific optimization for the npm registry connection
+      - name: Configure npm registry
+        run: |
+          npm config set registry http://registry.npmjs.org/
+          npm config set strict-ssl false
+      - name: Create pnpm store directory
+        shell: pwsh
+        run: New-Item -Path ".pnpm-store\v3" -ItemType Directory -Force
+      - name: Clean pnpm store
+        run: pnpm store prune || true
+      - name: Install dependencies
+        run: pnpm i --no-frozen-lockfile --fetch-timeout 600000
+      # Split the build step to prevent timeout issues
+      - name: Build app
+        run: pnpm build
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
+      - name: Package Windows app
+        run: pnpm dist:win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_OPTIONS: "--max_old_space_size=4096"
+
+  publish-linux:
+    strategy:
+      matrix:
+        node: ['22']
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.0.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+      - name: Cache Electron
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/electron
+            ~/.cache/electron-builder
+          key: ${{ runner.os }}-electron-cache-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-electron-cache-
+      - name: Create pnpm store directory
+        run: mkdir -p $(pnpm store path)
+      - name: Clean pnpm store
+        run: pnpm store prune || true
+      - name: Install dependencies
+        run: pnpm i --no-frozen-lockfile --fetch-timeout 600000
+      - run: pnpm dist:linux
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_OPTIONS: "--max_old_space_size=4096"
+
+  publish-mac:
+    strategy:
+      matrix:
+        node: ['22']
+        os: [macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.0.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Python dependencies
+        run: pip install setuptools
+      - name: Cache Electron
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/Library/Caches/electron
+            ~/Library/Caches/electron-builder
+          key: ${{ runner.os }}-electron-cache-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-electron-cache-
+      - name: Create pnpm store directory
+        run: mkdir -p $(pnpm store path)
+      - name: Clean pnpm store
+        run: pnpm store prune || true
+      - name: Install dependencies
+        run: pnpm i --no-frozen-lockfile --fetch-timeout 600000
+      - run: pnpm dist:mac
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_OPTIONS: "--max_old_space_size=4096"
+          # APPLE_ID: ${{ secrets.APPLE_ID }}
+          # APPLE_ID_PASS: ${{ secrets.APPLE_ID_PASS }}
+          # CSC_LINK: ${{ secrets.CSC_LINK }}
+          # CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+
+  publish-docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.0.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm i --no-frozen-lockfile
+      - name: Install docs dependencies
+        run: cd apps/docs && pnpm i
+      - name: Build docs
+        run: cd apps/docs && pnpm build
+      - name: Create CNAME file in dist directory
+        run: echo "comicers.org" > apps/docs/src/.vitepress/dist/CNAME
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./apps/docs/src/.vitepress/dist
+          force_orphan: true # This creates a clean gh-pages branch without history
