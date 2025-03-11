@@ -116,12 +116,18 @@ type UpdateMangaResponseData = {
 
 export class MALTrackerClient extends TrackerClientAbstract {
   userId: string;
-  latestPkceCode: { code_challenge: string; code_verifier: string } | undefined;
+  // Store multiple PKCE challenges with timestamps
+  pkceChallenges: Array<{
+    timestamp: number;
+    code_challenge: string;
+    code_verifier: string;
+    state: string;
+  }>;
 
   constructor(accessToken = '') {
     super(accessToken);
     this.userId = '';
-    this.latestPkceCode = undefined;
+    this.pkceChallenges = [];
   }
 
   getMetadata: () => TrackerMetadata = () => {
@@ -129,13 +135,27 @@ export class MALTrackerClient extends TrackerClientAbstract {
   };
 
   getAuthUrl: GetAuthUrlFunc = () => {
-    // Generate PKCE challenge with shorter code length for better compatibility
-    const pkceCode = pkceChallenge(43); // 43 characters is the recommended length
-    this.latestPkceCode = pkceCode;
+    // Generate PKCE challenge with SHA-256 method, which is more secure and better supported
+    const pkceCode = pkceChallenge();
     
-    console.debug('[MAL Auth] Generated PKCE challenge:', {
+    // Generate state
+    const state = Buffer.from(Date.now().toString()).toString('base64');
+    
+    // Store the PKCE challenge with a timestamp and state
+    const challenge = {
+      timestamp: Date.now(),
       code_challenge: pkceCode.code_challenge,
-      code_verifier: pkceCode.code_verifier
+      code_verifier: pkceCode.code_verifier,
+      state: state // Store state with the challenge
+    };
+    
+    // Clear old challenges (only keep the current one)
+    this.pkceChallenges = [challenge];
+    
+    console.debug('[MAL Auth] Generated new PKCE challenge:', {
+      code_challenge: pkceCode.code_challenge.substring(0, 10) + '...',
+      state: state,
+      verifier: pkceCode.code_verifier.substring(0, 10) + '...'
     });
 
     // Build the auth URL with properly encoded parameters
@@ -143,36 +163,95 @@ export class MALTrackerClient extends TrackerClientAbstract {
       response_type: 'code',
       client_id: CLIENT_ID,
       code_challenge: pkceCode.code_challenge,
-      code_challenge_method: 'plain',
-      redirect_uri: 'https://comicers.org'
+      code_challenge_method: 'S256',
+      redirect_uri: 'https://comicers.org',
+      state: state
     };
 
     const queryString = Object.entries(params)
       .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
       .join('&');
 
-    return `${OAUTH_BASE_URL}/authorize?${queryString}`;
+    const authUrl = `${OAUTH_BASE_URL}/authorize?${queryString}`;
+    console.debug('[MAL Auth] Generated auth URL:', authUrl);
+    
+    return authUrl;
   };
 
   getToken: GetTokenFunc = async (code: string) => {
-    if (!this.latestPkceCode) {
-      console.error('[MAL Auth] No PKCE code available for token request');
+    if (this.pkceChallenges.length === 0) {
+      console.error('[MAL Auth] No PKCE challenges available for token request');
       return null;
     }
 
-    console.debug('[MAL Auth] Starting token request with:', {
-      code,
-      code_verifier: this.latestPkceCode.code_verifier
+    console.debug('[MAL Auth] Starting token request with raw input:', code);
+
+    // Clean up the code by removing any leading/trailing whitespace and any @ symbols
+    let cleanedCode = code.trim();
+    let stateFromUrl: string | null = null;
+    
+    // Try to parse the URL and extract the code parameter
+    try {
+      if (cleanedCode.includes('comicers.org')) {
+        const url = new URL(cleanedCode);
+        const urlCode = url.searchParams.get('code');
+        stateFromUrl = url.searchParams.get('state');
+        
+        if (urlCode) {
+          cleanedCode = urlCode;
+          console.debug('[MAL Auth] Successfully extracted code from URL params:', {
+            codeLength: cleanedCode.length,
+            codeStart: cleanedCode.substring(0, 20) + '...',
+            state: stateFromUrl
+          });
+        } else {
+          console.debug('[MAL Auth] URL found but no code parameter present');
+          return null;
+        }
+      }
+    } catch (e) {
+      console.debug('[MAL Auth] URL parsing failed:', e);
+      return null;
+    }
+
+    // Find the challenge that matches the state from the URL
+    const challenge = this.pkceChallenges.find(c => c.state === stateFromUrl);
+    if (!challenge) {
+      console.error('[MAL Auth] No matching PKCE challenge found for state:', stateFromUrl);
+      return null;
+    }
+
+    console.debug('[MAL Auth] Found matching PKCE challenge:', {
+      timestamp: new Date(challenge.timestamp).toLocaleTimeString(),
+      state: challenge.state
     });
 
+    // Try token exchange with the matching challenge
+    const result = await this.tryTokenExchange(cleanedCode, challenge.code_verifier);
+    
+    // Clean up challenges after attempt
+    this.pkceChallenges = [];
+    
+    return result;
+  };
+
+  // Helper method to try token exchange with a specific code_verifier
+  private async tryTokenExchange(code: string, code_verifier: string): Promise<string | null> {
     const url = `${OAUTH_BASE_URL}/token`;
     
     // Create form data with the exact parameters MAL expects
-    const formData = new URLSearchParams({
-      client_id: CLIENT_ID,
-      code: code,
-      code_verifier: this.latestPkceCode.code_verifier,
-      grant_type: 'authorization_code'
+    const formData = new URLSearchParams();
+    formData.append('client_id', CLIENT_ID);
+    formData.append('code', code);
+    formData.append('code_verifier', code_verifier);
+    formData.append('grant_type', 'authorization_code');
+    formData.append('redirect_uri', 'https://comicers.org');
+
+    console.debug('[MAL Auth] Token request parameters:', {
+      code_length: code.length,
+      code_start: code.substring(0, 20) + '...',
+      verifier_length: code_verifier.length,
+      verifier_start: code_verifier.substring(0, 20) + '...'
     });
 
     try {
@@ -185,36 +264,33 @@ export class MALTrackerClient extends TrackerClientAbstract {
       });
 
       const text = await response.text();
-      console.debug('[MAL Auth] Token response:', {
-        status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers),
-        body: text
-      });
-
+      
       if (!response.ok) {
-        console.error('[MAL Auth] Token request failed:', response.status, text);
+        console.debug('[MAL Auth] Token exchange failed:', {
+          status: response.status,
+          response: text
+        });
         return null;
       }
 
       try {
         const data = JSON.parse(text);
         if ('error' in data || !data.access_token) {
-          console.error('[MAL Auth] Invalid token response:', data);
+          console.debug('[MAL Auth] Invalid token response:', data);
           return null;
         }
         
         console.debug('[MAL Auth] Successfully retrieved access token');
         return data.access_token;
       } catch (e) {
-        console.error('[MAL Auth] Failed to parse token response:', e);
+        console.debug('[MAL Auth] Failed to parse token response:', e);
         return null;
       }
     } catch (e) {
-      console.error('[MAL Auth] Token request network error:', e);
+      console.debug('[MAL Auth] Token request network error:', e);
       return null;
     }
-  };
+  }
 
   getUsername: GetUsernameFunc = () => {
     if (this.accessToken === '') return new Promise((resolve) => resolve(null));

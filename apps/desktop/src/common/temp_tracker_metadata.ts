@@ -16,7 +16,7 @@ export const MUTrackerMetadata: TrackerMetadata = {
 
 export const MALTrackerMetadata: TrackerMetadata = {
   id: 'MyAnimeList',
-  name: 'MyAnimeList',
+  name: 'MyAnimeList (Under Development)',
   url: 'https://myanimelist.net',
   hasCustomLists: false,
 };
