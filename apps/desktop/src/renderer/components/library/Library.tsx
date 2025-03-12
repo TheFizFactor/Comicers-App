@@ -37,7 +37,7 @@ const Library: React.FC<Props> = () => {
   const activeSeriesList = useRecoilValue(activeSeriesListState);
   const [multiSelectEnabled, setMultiSelectEnabled] = useRecoilState(multiSelectEnabledState);
   const [filter, setFilter] = useRecoilState(filterState);
-  const [reloadingSeriesList, setReloadingSeriesList] = useRecoilState(reloadingSeriesListState);
+  const [_reloadingSeriesList, setReloadingSeriesList] = useRecoilState(reloadingSeriesListState);
   const libraryFilterCategory = useRecoilValue(libraryFilterCategoryState);
   const [libraryFilterStatus, setLibraryFilterStatus] = useRecoilState(libraryFilterStatusState);
   const [libraryFilterProgress, setLibraryFilterProgress] = useRecoilState(libraryFilterProgressState);
