@@ -23,6 +23,19 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
+      # Add Visual Studio build tools setup
+      - name: Setup Visual Studio Build Tools
+        uses: microsoft/setup-msbuild@v2
+      - name: Setup Windows SDK
+        uses: microsoft/setup-windowsSDK@v1
+        with:
+          version: 19041
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Python dependencies
+        run: pip install setuptools
       # Cache electron binaries to speed up builds
       - name: Cache Electron
         uses: actions/cache@v3
@@ -45,20 +58,15 @@ jobs:
         run: pnpm store prune || true
       - name: Install dependencies
         run: pnpm i --no-frozen-lockfile --fetch-timeout 600000
-      # Split the build step to prevent timeout issues
-      - name: Build app
-        run: pnpm build
-        env:
-          NODE_OPTIONS: "--max_old_space_size=4096"
-      - name: Package Windows app
-        run: pnpm dist:win
+      # Build and package in one step
+      - name: Build and Package Windows app
+        run: |
+          pnpm build
+          pnpm dist:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_OPTIONS: "--max_old_space_size=4096"
-      - name: Build Windows app
-        run: pnpm run dist:win
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
 
   publish-linux:
     strategy:
