@@ -26,6 +26,15 @@ jobs:
       # Setup build tools
       - name: Setup Visual Studio Build Tools
         uses: microsoft/setup-msbuild@v1.1
+      - name: Setup MSBuild environment
+        shell: pwsh
+        run: |
+          $trackingFolder = Join-Path $env:RUNNER_TEMP "MSBuildTracking"
+          New-Item -Path $trackingFolder -ItemType Directory -Force
+          echo "MSBUILDDISABLENODEREUSE=1" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "TrackFileAccess=false" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "UseSharedCompilation=false" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "MSBUILDTRACKINGLOGS=$trackingFolder" | Out-File -FilePath $env:GITHUB_ENV -Append
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -66,9 +75,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_OPTIONS: "--max_old_space_size=4096"
           ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
-          TRACKER_TEMP: ${{ runner.temp }}\tracker
-          TMP: ${{ runner.temp }}
-          TEMP: ${{ runner.temp }}
+          TrackFileAccess: false
+          UseSharedCompilation: false
+          MSBUILDDISABLENODEREUSE: 1
+          MSBUILDTRACKINGLOGS: ${{ runner.temp }}\MSBuildTracking
 
   publish-linux:
     strategy:
