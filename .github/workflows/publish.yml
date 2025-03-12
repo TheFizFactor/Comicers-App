@@ -26,15 +26,25 @@ jobs:
       # Setup build tools
       - name: Setup Visual Studio Build Tools
         uses: microsoft/setup-msbuild@v1.1
-      - name: Setup MSBuild environment
+      - name: Setup build environment
         shell: pwsh
         run: |
-          $trackingFolder = Join-Path $env:RUNNER_TEMP "MSBuildTracking"
-          New-Item -Path $trackingFolder -ItemType Directory -Force
-          echo "MSBUILDDISABLENODEREUSE=1" | Out-File -FilePath $env:GITHUB_ENV -Append
+          # Create build directories
+          $buildDir = Join-Path $env:RUNNER_TEMP "build_logs"
+          New-Item -Path $buildDir -ItemType Directory -Force
+          
+          # Set environment variables
+          echo "CL=/MP" | Out-File -FilePath $env:GITHUB_ENV -Append
           echo "TrackFileAccess=false" | Out-File -FilePath $env:GITHUB_ENV -Append
-          echo "UseSharedCompilation=false" | Out-File -FilePath $env:GITHUB_ENV -Append
-          echo "MSBUILDTRACKINGLOGS=$trackingFolder" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "UseMultiToolTask=true" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "EnforceProcessCountAcrossBuilds=true" | Out-File -FilePath $env:GITHUB_ENV -Append
+          
+          # Configure MSBuild
+          echo "MSBUILD_ARGS=/p:TrackFileAccess=false /p:CLToolExe=cl.exe /p:CLToolPath=`"C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.43.34808\bin\Hostx64\x64`" /nr:false" | Out-File -FilePath $env:GITHUB_ENV -Append
+          
+          # Set paths
+          echo "VCTargetsPath=C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Microsoft\VC\v170" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "TRACKING_FOLDER=$buildDir" | Out-File -FilePath $env:GITHUB_ENV -Append
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -70,15 +80,17 @@ jobs:
       - name: Build and Package Windows app
         run: |
           pnpm build
-          pnpm dist:win
+          set "GYP_MSVS_VERSION=2022" && set "GYP_MSVS_OVERRIDE_PATH=C:\Program Files\Microsoft Visual Studio\2022\Enterprise" && pnpm dist:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_OPTIONS: "--max_old_space_size=4096"
           ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
           TrackFileAccess: false
-          UseSharedCompilation: false
-          MSBUILDDISABLENODEREUSE: 1
-          MSBUILDTRACKINGLOGS: ${{ runner.temp }}\MSBuildTracking
+          UseMultiToolTask: true
+          EnforceProcessCountAcrossBuilds: true
+          PreferredToolArchitecture: x64
+          VisualStudioVersion: 17.0
+          UseEnv: true
 
   publish-linux:
     strategy:
