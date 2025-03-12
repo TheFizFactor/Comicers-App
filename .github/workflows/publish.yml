@@ -54,6 +54,9 @@ jobs:
         run: pnpm store prune || true
       - name: Install dependencies
         run: pnpm i --no-frozen-lockfile --fetch-timeout 600000
+      - name: Create tracker directory
+        shell: pwsh
+        run: New-Item -Path "${{ runner.temp }}\tracker" -ItemType Directory -Force
       # Build and package in one step
       - name: Build and Package Windows app
         run: |
