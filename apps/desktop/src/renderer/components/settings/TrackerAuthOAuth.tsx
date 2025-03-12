@@ -6,9 +6,10 @@ import persistantStore from '@/renderer/util/persistantStore';
 import { TrackerMetadata } from '@/common/models/types';
 import { AccordionContent, AccordionTrigger } from '@comicers/ui/components/Accordion';
 import { Button } from '@comicers/ui/components/Button';
-import { ExternalLinkIcon, Loader2Icon, CheckCircle2 } from 'lucide-react';
+import { ExternalLinkIcon, Loader2Icon, CheckCircle2, WifiOffIcon } from 'lucide-react';
 import { Input } from '@comicers/ui/components/Input';
 import { Alert, AlertDescription } from '@comicers/ui/components/Alert';
+import { useNetworkStatus } from '@/renderer/hooks/useNetworkStatus';
 
 type Props = {
   trackerMetadata: TrackerMetadata;
@@ -21,11 +22,17 @@ export const TrackerAuthOAuth: React.FC<Props> = (props: Props) => {
   const [username, setUsername] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const isOnline = useNetworkStatus();
 
   const loadTrackerDetails = async () => {
     setLoading(true);
     setError(null);
     setShowSuccess(false);
+
+    if (!isOnline) {
+      setLoading(false);
+      return;
+    }
 
     setAuthUrls(
       await ipcRenderer.invoke(ipcChannels.TRACKER.GET_AUTH_URLS).catch((e) => console.error(e)),
@@ -45,6 +52,11 @@ export const TrackerAuthOAuth: React.FC<Props> = (props: Props) => {
   };
 
   const saveAccessToken = async (accessToken: string) => {
+    if (!isOnline) {
+      setError('Cannot authenticate while offline');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setShowSuccess(false);
@@ -61,6 +73,11 @@ export const TrackerAuthOAuth: React.FC<Props> = (props: Props) => {
   };
 
   const submitAccessCode = async () => {
+    if (!isOnline) {
+      setError('Cannot authenticate while offline');
+      return;
+    }
+
     if (!accessCode || accessCode.trim() === '') {
       setError('Please enter a valid access code');
       return;
@@ -93,7 +110,7 @@ export const TrackerAuthOAuth: React.FC<Props> = (props: Props) => {
 
   useEffect(() => {
     loadTrackerDetails();
-  }, []);
+  }, [isOnline]);
 
   if (loading) {
     return (
@@ -111,7 +128,12 @@ export const TrackerAuthOAuth: React.FC<Props> = (props: Props) => {
       <AccordionTrigger className="hover:no-underline">
         <div className="flex justify-between items-center w-full pr-2">
           <span>{props.trackerMetadata.name}</span>
-          {username ? (
+          {!isOnline ? (
+            <div className="flex items-center space-x-2 text-muted-foreground">
+              <WifiOffIcon className="w-4 h-4" />
+              <span>Offline mode</span>
+            </div>
+          ) : username ? (
             <div className="flex space-x-2">
               <span>
                 Logged in as{' '}
@@ -140,6 +162,15 @@ export const TrackerAuthOAuth: React.FC<Props> = (props: Props) => {
 
       <AccordionContent>
         <div className="flex flex-col space-y-4">
+          {!isOnline && (
+            <Alert variant="destructive" className="py-2 bg-yellow-500/10 border-yellow-500">
+              <AlertDescription className="flex items-center text-yellow-500">
+                <WifiOffIcon className="w-4 h-4 mr-2" />
+                You are currently offline. Authentication requires an internet connection.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {props.trackerMetadata.id === 'MyAnimeList' ? (
             <div className="p-4 border-2 border-yellow-500 rounded-lg bg-yellow-500/10">
               <h3 className="text-lg font-semibold mb-2 text-yellow-500">⚠️ Under Development</h3>
@@ -177,7 +208,7 @@ export const TrackerAuthOAuth: React.FC<Props> = (props: Props) => {
                   <div className="bg-foreground text-background w-8 h-8 rounded-full flex items-center justify-center">
                     <span className="font-bold">1</span>
                   </div>
-                  <Button variant="link" asChild>
+                  <Button variant="link" asChild disabled={!isOnline}>
                     <a href={authUrls[props.trackerMetadata.id]} target="_blank">
                       Authenticate on {props.trackerMetadata.name}
                       <ExternalLinkIcon className="ml-2 w-4 h-4" />
@@ -206,6 +237,7 @@ export const TrackerAuthOAuth: React.FC<Props> = (props: Props) => {
                       value={accessCode || ''}
                       placeholder={props.trackerMetadata.id === 'MyAnimeList' ? "Paste URL from browser (https://comicers.org/?code=...)" : "Paste access code..."}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAccessCode(e.target.value)}
+                      disabled={!isOnline}
                     />
                   </div>
                 </div>
@@ -215,7 +247,7 @@ export const TrackerAuthOAuth: React.FC<Props> = (props: Props) => {
                     <span className="font-bold">3</span>
                   </div>
                   <div className="flex space-x-2">
-                    <Button onClick={() => submitAccessCode()} disabled={loading}>
+                    <Button onClick={() => submitAccessCode()} disabled={loading || !isOnline}>
                       {loading ? (
                         <>
                           <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
@@ -232,7 +264,7 @@ export const TrackerAuthOAuth: React.FC<Props> = (props: Props) => {
                         setError(null);
                         loadTrackerDetails();
                       }}
-                      disabled={loading}
+                      disabled={loading || !isOnline}
                     >
                       Refresh
                     </Button>

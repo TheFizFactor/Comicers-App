@@ -27,6 +27,8 @@ import { downloadCover } from '@/renderer/util/download';
 import { createAutoBackup } from '@/renderer/util/backup';
 import { SidebarProvider } from '@comicers/ui/components/Sidebar';
 import { DashboardSidebar } from './DashboardSidebar';
+import { Home } from 'lucide-react';
+import HomePage from './HomePage';
 
 interface Props {}
 
@@ -87,11 +89,12 @@ const DashboardPage: React.FC<Props> = () => {
       <DashboardSidebar />
       <div className="px-2 w-full">
         <Routes>
+          <Route path="*" element={<HomePage />} />
           <Route path={`${routes.SERIES}/:id`} element={<SeriesDetails />} />
           <Route path={`${routes.SEARCH}/*`} element={<Search />} />
           <Route path={`${routes.PLUGINS}/*`} element={<Plugins />} />
           <Route path={`${routes.DOWNLOADS}/*`} element={<Downloads />} />
-          <Route path="*" element={<Library />} />
+          <Route path={`${routes.LIBRARY}/*`} element={<Library />} />
         </Routes>
       </div>
     </SidebarProvider>

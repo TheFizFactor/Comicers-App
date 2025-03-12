@@ -12,6 +12,7 @@ import {
   seriesState,
   activeReadingListState,
   readingListsState,
+  reloadingSeriesListState,
 } from '@/renderer/state/libraryStates';
 import {
   libraryFilterStatusState,
@@ -35,12 +36,13 @@ const Library: React.FC<Props> = () => {
   const [removeModalSeries, setRemoveModalSeries] = useState<Series | null>(null);
   const activeSeriesList = useRecoilValue(activeSeriesListState);
   const [multiSelectEnabled, setMultiSelectEnabled] = useRecoilState(multiSelectEnabledState);
-  const filter = useRecoilValue(filterState);
+  const [filter, setFilter] = useRecoilState(filterState);
+  const [reloadingSeriesList, setReloadingSeriesList] = useRecoilState(reloadingSeriesListState);
   const libraryFilterCategory = useRecoilValue(libraryFilterCategoryState);
-  const libraryFilterStatus = useRecoilValue(libraryFilterStatusState);
-  const libraryFilterProgress = useRecoilValue(libraryFilterProgressState);
-  const libraryView = useRecoilValue(libraryViewState);
-  const librarySort = useRecoilValue(librarySortState);
+  const [libraryFilterStatus, setLibraryFilterStatus] = useRecoilState(libraryFilterStatusState);
+  const [libraryFilterProgress, setLibraryFilterProgress] = useRecoilState(libraryFilterProgressState);
+  const [libraryView, setLibraryView] = useRecoilState(libraryViewState);
+  const [librarySort, setLibrarySort] = useRecoilState(librarySortState);
   const setSeries = useSetRecoilState(seriesState);
   const setSeriesList = useSetRecoilState(seriesListState);
   const setChapterList = useSetRecoilState(chapterListState);
@@ -57,6 +59,15 @@ const Library: React.FC<Props> = () => {
     setSeriesList(library.fetchSeriesList());
     setReadingLists(library.fetchReadingLists());
   }, [setSeriesList, setReadingLists]);
+
+  useEffect(() => {
+    setFilter('');
+    setReloadingSeriesList(false);
+    setLibraryFilterStatus(null);
+    setLibraryFilterProgress(ProgressFilter.All);
+    setLibrarySort(LibrarySort.TitleAsc);
+    setLibraryView(LibraryView.GridCompact);
+  }, []);
 
   /**
    * Get a filtered (and sorted) list of series after applying the specified filters.

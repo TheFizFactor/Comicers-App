@@ -9,7 +9,10 @@
     "SHOW_RESTART_UPDATE_DIALOG": "show-restart-update-dialog",
     "SHOW_PERFORM_UPDATE_DIALOG": "show-perform-update-dialog",
     "READ_ENTIRE_FILE": "read-entire-file",
-    "CREATE_OBJECT_URL": "create-object-url"
+    "CREATE_OBJECT_URL": "create-object-url",
+    "GET_RELEASE_NOTES": "get-release-notes",
+    "UPDATE_DOWNLOAD_PROGRESS": "update-download-progress",
+    "UPDATE_SCHEDULED": "update-scheduled"
   },
   "WINDOW": {
     "MINIMIZE": "window-minimize",

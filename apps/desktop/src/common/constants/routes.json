@@ -1,8 +1,9 @@
 {
   "ABOUT": "/about",
+  "HOME": "/",
   "PLUGINS": "/plugins",
   "DOWNLOADS": "/downloads",
-  "LIBRARY": "/",
+  "LIBRARY": "/library",
   "READER": "/reader",
   "SEARCH": "/search",
   "SERIES": "/series"

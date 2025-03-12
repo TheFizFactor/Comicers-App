@@ -359,7 +359,7 @@ const ReaderPage: React.FC = () => {
     setTitlebarText(undefined);
 
     if (discordPresenceEnabled) {
-      ipcRenderer.invoke(ipcChannels.INTEGRATION.DISCORD_SET_ACTIVITY);
+      ipcRenderer.invoke(ipcChannels.INTEGRATION.DISCORD_SET_ACTIVITY).catch(console.error);
     }
 
     if (readerSeries !== undefined) {
@@ -493,9 +493,9 @@ const ReaderPage: React.FC = () => {
       setShowingSettingsModal(!showingSettingsModal),
     );
     Mousetrap.bind(keyToggleShowingSidebar, () => setShowingSidebar(!showingSidebar));
-    Mousetrap.bind(keyToggleFullscreen, () =>
-      ipcRenderer.invoke(ipcChannels.WINDOW.TOGGLE_FULLSCREEN),
-    );
+    Mousetrap.bind(keyToggleFullscreen, () => {
+      void ipcRenderer.invoke(ipcChannels.WINDOW.TOGGLE_FULLSCREEN);
+    });
     Mousetrap.bind(keyExit, exitPage);
     Mousetrap.bind(keyCloseOrBack, exitPage);
   };
@@ -561,6 +561,30 @@ const ReaderPage: React.FC = () => {
     addKeybindings();
     loadChapterData(chapter_id!, series_id!);
   }, [location]);
+
+  // Add cleanup effect when component unmounts
+  useEffect(() => {
+    return () => {
+      // Reset all reader-related states
+      setReaderSeries(undefined);
+      setReaderChapter(undefined);
+      setPageNumber(1);
+      setPageUrls([]);
+      setLastPageNumber(0);
+      setRelevantChapterList([]);
+      setLanguageChapterList([]);
+      setShowingNoNextChapter(false);
+      setShowingSettingsModal(false);
+      setShowingSidebar(false);
+      removeKeybindings();
+      setTitlebarText(undefined);
+
+      if (discordPresenceEnabled) {
+        // Use void to explicitly ignore the promise
+        void ipcRenderer.invoke(ipcChannels.INTEGRATION.DISCORD_SET_ACTIVITY);
+      }
+    };
+  }, []);
 
   return (
     <SidebarProvider

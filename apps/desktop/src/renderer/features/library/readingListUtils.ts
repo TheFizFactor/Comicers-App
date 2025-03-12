@@ -3,9 +3,19 @@ import { v4 as uuidv4 } from 'uuid';
 const { ipcRenderer } = require('electron');
 import library from '@/renderer/services/library';
 import { toast } from '@comicers/ui/hooks/use-toast';
+import { importSeries } from './utils';
+import { LanguageKey, Series } from '@tiyo/common';
 
 export async function exportReadingList(readingList: ReadingList): Promise<void> {
-  const exportData = JSON.stringify(readingList, null, 2);
+  // Include full series data in the export
+  const exportData = JSON.stringify({
+    ...readingList,
+    series: readingList.series.map(series => ({
+      ...series,
+      chapters: series.id ? library.fetchChapters(series.id) : []
+    }))
+  }, null, 2);
+  
   const fileFilter = { name: 'Reading List', extensions: ['json'] };
   
   try {
@@ -42,7 +52,7 @@ export async function importReadingList(): Promise<ReadingList | null> {
     
     if (!filePath.canceled && filePath.filePaths.length > 0) {
       const fileContent = await ipcRenderer.invoke('fs:readFile', filePath.filePaths[0]);
-      const importedList: ReadingList = JSON.parse(fileContent);
+      const importedList = JSON.parse(fileContent);
       
       // Validate the imported data
       if (!importedList.name || !Array.isArray(importedList.series)) {
@@ -52,23 +62,33 @@ export async function importReadingList(): Promise<ReadingList | null> {
       // Get local library series
       const localSeries = library.fetchSeriesList();
       
-      // Map imported series to local series by matching source IDs and titles
-      const mappedSeries = importedList.series
-        .map(importedSeries => {
-          const matchingSeries = localSeries.find(
+      // Import series that don't exist locally
+      const mappedSeries = await Promise.all(
+        importedList.series.map(async (importedSeries: Series) => {
+          let series = localSeries.find(
             s => s.sourceId === importedSeries.sourceId && s.extensionId === importedSeries.extensionId
-          ) || localSeries.find(
-            s => s.title.toLowerCase() === importedSeries.title.toLowerCase()
           );
-          return matchingSeries;
+          
+          if (!series) {
+            // Import the series if it doesn't exist locally
+            try {
+              series = await importSeries(importedSeries, [] as LanguageKey[], true);
+            } catch (error) {
+              console.error(`Failed to import series: ${importedSeries.title}`, error);
+              return null;
+            }
+          }
+          
+          return series;
         })
-        .filter(s => s !== undefined);
+      );
       
-      // Generate new list with mapped series
+      // Filter out failed imports and generate new list
+      const validSeries = mappedSeries.filter(s => s !== null);
       const newList: ReadingList = {
         ...importedList,
         id: uuidv4(),
-        series: mappedSeries,
+        series: validSeries,
         createdAt: Date.now(),
         updatedAt: Date.now(),
       };
@@ -78,7 +98,7 @@ export async function importReadingList(): Promise<ReadingList | null> {
       
       toast({
         title: 'Success',
-        description: `Reading list "${newList.name}" imported with ${mappedSeries.length} series`,
+        description: `Reading list "${newList.name}" imported with ${validSeries.length} series`,
       });
       
       return newList;

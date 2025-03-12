@@ -22,6 +22,7 @@ import {
   ChevronRight,
   FolderDown,
   GitFork,
+  Heart,
   Home,
   Info,
   LibraryBig,
@@ -221,6 +222,16 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              size="lg"
+              className="text-primary"
+              onClick={() => window.open('https://github.com/sponsors/TheFizFactor', '_blank')}
+            >
+              <span className="truncate font-semibold text-sm">Support Comicers</span>
+              <Heart className="ml-auto size-4" />
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <Dialog>
               <DropdownMenu>
