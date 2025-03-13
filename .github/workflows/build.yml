@@ -46,14 +46,14 @@ jobs:
           New-Item -Path $buildDir -ItemType Directory -Force
           
           # Set environment variables for MSBuild
-          echo "CL=/MP" | Out-File -FilePath $env:GITHUB_ENV -Append
-          echo "TrackFileAccess=false" | Out-File -FilePath $env:GITHUB_ENV -Append
-          echo "UseMultiToolTask=true" | Out-File -FilePath $env:GITHUB_ENV -Append
-          echo "TRACKING_FOLDER=$buildDir" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "CL=/MP" >> $env:GITHUB_ENV
+          echo "TrackFileAccess=false" >> $env:GITHUB_ENV
+          echo "UseMultiToolTask=true" >> $env:GITHUB_ENV
+          echo "TRACKING_FOLDER=$buildDir" >> $env:GITHUB_ENV
           
           # Set node-gyp environment variables instead of using npm config
-          echo "GYP_MSVS_VERSION=2022" | Out-File -FilePath $env:GITHUB_ENV -Append
-          echo "PYTHON=python3" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "GYP_MSVS_VERSION=2022" >> $env:GITHUB_ENV
+          echo "PYTHON=python3" >> $env:GITHUB_ENV
       
       - name: Cache Node modules
         uses: actions/cache@v3
@@ -86,7 +86,7 @@ jobs:
         env:
           ELECTRON_BUILDER_BINARIES_MIRROR: https://npmmirror.com/mirrors/electron-builder-binaries/
           GYP_MSVS_VERSION: 2022
-          GYP_MSVS_OVERRIDE_PATH: C:\Program Files\Microsoft Visual Studio\2022\Enterprise
+          GYP_MSVS_OVERRIDE_PATH: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise"
           
       # Set appropriate environment variables for the build process
       - name: Build
@@ -95,7 +95,7 @@ jobs:
           NODE_OPTIONS: "--max_old_space_size=4096"
           ELECTRON_BUILDER_BINARIES_MIRROR: https://npmmirror.com/mirrors/electron-builder-binaries/
           GYP_MSVS_VERSION: 2022
-          GYP_MSVS_OVERRIDE_PATH: C:\Program Files\Microsoft Visual Studio\2022\Enterprise
+          GYP_MSVS_OVERRIDE_PATH: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise"
           PreferredToolArchitecture: x64
           VisualStudioVersion: 17
           UseEnv: true

@@ -34,21 +34,21 @@ jobs:
           New-Item -Path $buildDir -ItemType Directory -Force
           
           # Set environment variables
-          echo "CL=/MP" | Out-File -FilePath $env:GITHUB_ENV -Append
-          echo "TrackFileAccess=false" | Out-File -FilePath $env:GITHUB_ENV -Append
-          echo "UseMultiToolTask=true" | Out-File -FilePath $env:GITHUB_ENV -Append
-          echo "EnforceProcessCountAcrossBuilds=true" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "CL=/MP" >> $env:GITHUB_ENV
+          echo "TrackFileAccess=false" >> $env:GITHUB_ENV
+          echo "UseMultiToolTask=true" >> $env:GITHUB_ENV
+          echo "EnforceProcessCountAcrossBuilds=true" >> $env:GITHUB_ENV
           
-          # Configure MSBuild
-          echo "MSBUILD_ARGS=/p:TrackFileAccess=false /p:CLToolExe=cl.exe /p:CLToolPath=\"C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.43.34808\bin\Hostx64\x64\" /nr:false" | Out-File -FilePath $env:GITHUB_ENV -Append
+          # Configure MSBuild - using correct syntax for paths with spaces
+          echo "MSBUILD_ARGS=/p:TrackFileAccess=false /p:CLToolExe=cl.exe" >> $env:GITHUB_ENV
           
-          # Set paths
-          echo "VCTargetsPath=C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Microsoft\VC\v170" | Out-File -FilePath $env:GITHUB_ENV -Append
-          echo "TRACKING_FOLDER=$buildDir" | Out-File -FilePath $env:GITHUB_ENV -Append
+          # Set paths using proper escaping for paths with spaces
+          echo "VCTargetsPath=C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\MSBuild\\Microsoft\\VC\\v170" >> $env:GITHUB_ENV
+          echo "TRACKING_FOLDER=$buildDir" >> $env:GITHUB_ENV
           
-          # Set node-gyp environment variables instead of using npm config
-          echo "GYP_MSVS_VERSION=2022" | Out-File -FilePath $env:GITHUB_ENV -Append
-          echo "PYTHON=python3" | Out-File -FilePath $env:GITHUB_ENV -Append
+          # Set node-gyp environment variables 
+          echo "GYP_MSVS_VERSION=2022" >> $env:GITHUB_ENV
+          echo "PYTHON=python3" >> $env:GITHUB_ENV
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -96,15 +96,16 @@ jobs:
           VisualStudioVersion: 17
           UseEnv: true
           GYP_MSVS_VERSION: 2022
-          GYP_MSVS_OVERRIDE_PATH: C:\Program Files\Microsoft Visual Studio\2022\Enterprise
+          GYP_MSVS_OVERRIDE_PATH: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise"
       # Set GYP environment variables for native module build
       - name: Package Windows app
         run: |
-          cd apps/desktop && cross-env ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES=1 GYP_MSVS_VERSION=2022 GYP_MSVS_OVERRIDE_PATH="C:\Program Files\Microsoft Visual Studio\2022\Enterprise" pnpm dist:win
+          cd apps/desktop && cross-env ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES=1 GYP_MSVS_VERSION=2022 pnpm dist:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_OPTIONS: "--max_old_space_size=4096"
           ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          GYP_MSVS_OVERRIDE_PATH: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise"
           
   publish-linux:
     strategy:
