@@ -1,0 +1,7 @@
+{
+  "msvs_version": "2022",
+  "nodedir": "%USERPROFILE%\\.electron-gyp",
+  "python": "python3",
+  "make_args": ["/p:TrackFileAccess=false"],
+  "build_args": ["/p:TrackFileAccess=false"]
+}

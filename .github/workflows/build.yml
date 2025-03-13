@@ -31,11 +31,28 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          
-      - name: Install Windows Build Tools
+      
+      # Use Microsoft's official setup-msbuild action for Windows
+      - name: Setup Visual Studio
         if: matrix.os == 'windows-latest'
+        uses: microsoft/setup-msbuild@v1.1
+          
+      # Configure Windows build environment properly
+      - name: Configure Windows build environment
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
         run: |
-          npm config set msvs_version 2019
+          $buildDir = Join-Path $env:RUNNER_TEMP "build_logs"
+          New-Item -Path $buildDir -ItemType Directory -Force
+          
+          # Set environment variables for MSBuild
+          echo "CL=/MP" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "TrackFileAccess=false" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "UseMultiToolTask=true" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "TRACKING_FOLDER=$buildDir" | Out-File -FilePath $env:GITHUB_ENV -Append
+          
+          # Configure node-gyp for Windows
+          npm config set msvs_version 2022
           npm config set python python3
       
       - name: Cache Node modules
@@ -63,16 +80,25 @@ jobs:
       - name: Clean pnpm store
         run: pnpm store prune || true
         
+      # Set environment variables for Windows native module build
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile --fetch-timeout 600000
         env:
           ELECTRON_BUILDER_BINARIES_MIRROR: https://npmmirror.com/mirrors/electron-builder-binaries/
+          GYP_MSVS_VERSION: 2022
+          GYP_MSVS_OVERRIDE_PATH: C:\Program Files\Microsoft Visual Studio\2022\Enterprise
           
+      # Set appropriate environment variables for the build process
       - name: Build
         run: pnpm build
         env:
           NODE_OPTIONS: "--max_old_space_size=4096"
           ELECTRON_BUILDER_BINARIES_MIRROR: https://npmmirror.com/mirrors/electron-builder-binaries/
+          GYP_MSVS_VERSION: 2022
+          GYP_MSVS_OVERRIDE_PATH: C:\Program Files\Microsoft Visual Studio\2022\Enterprise
+          PreferredToolArchitecture: x64
+          VisualStudioVersion: 17
+          UseEnv: true
           
       - name: Lint
         run: pnpm lint

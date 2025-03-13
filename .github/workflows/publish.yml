@@ -45,6 +45,11 @@ jobs:
           # Set paths
           echo "VCTargetsPath=C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Microsoft\VC\v170" | Out-File -FilePath $env:GITHUB_ENV -Append
           echo "TRACKING_FOLDER=$buildDir" | Out-File -FilePath $env:GITHUB_ENV -Append
+          
+          # Configure NPM/Node-GYP
+          npm config set msvs_version 2022
+          npm config set python python3
+          npm config set track_file_access false
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -71,8 +76,13 @@ jobs:
         run: New-Item -Path ".pnpm-store\v3" -ItemType Directory -Force
       - name: Clean pnpm store
         run: pnpm store prune || true
+      # Install cross-env package globally to help with environment variables
+      - name: Install global dependencies
+        run: npm install -g cross-env
       - name: Install dependencies
-        run: pnpm i --no-frozen-lockfile --fetch-timeout 600000
+        run: |
+          pnpm i --no-frozen-lockfile --fetch-timeout 600000
+          cd apps/desktop && pnpm add cross-env --save-dev
       # Create tracking folder for native module build
       - name: Create tracking folder
         shell: pwsh
@@ -86,14 +96,17 @@ jobs:
           PreferredToolArchitecture: x64
           VisualStudioVersion: 17
           UseEnv: true
+          GYP_MSVS_VERSION: 2022
+          GYP_MSVS_OVERRIDE_PATH: C:\Program Files\Microsoft Visual Studio\2022\Enterprise
       # Set GYP environment variables for native module build
       - name: Package Windows app
         run: |
-          set "GYP_MSVS_VERSION=2022" && set "GYP_MSVS_OVERRIDE_PATH=C:\Program Files\Microsoft Visual Studio\2022\Enterprise" && pnpm dist:win
+          cd apps/desktop && cross-env ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES=1 GYP_MSVS_VERSION=2022 GYP_MSVS_OVERRIDE_PATH="C:\Program Files\Microsoft Visual Studio\2022\Enterprise" pnpm dist:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_OPTIONS: "--max_old_space_size=4096"
           ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          
   publish-linux:
     strategy:
       matrix:

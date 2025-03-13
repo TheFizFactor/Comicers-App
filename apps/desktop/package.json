@@ -10,7 +10,7 @@
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "lint": "biome lint src",
-    "dist:win": "pnpm electron-builder --publish onTagOrDraft --win",
+    "dist:win": "cross-env ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES=1 pnpm electron-builder --publish onTagOrDraft --win",
     "dist:mac": "pnpm electron-builder --publish onTagOrDraft --mac",
     "dist:linux": "pnpm electron-builder --publish onTagOrDraft --linux"
   },
@@ -191,6 +191,7 @@
     "@types/uuid": "8.3.4",
     "autoprefixer": "10.4.21",
     "browserslist-config-erb": "0.0.3",
+    "cross-env": "^7.0.3",
     "electron": "32.3.3",
     "electron-builder": "25.1.8",
     "electron-debug": "3.2.0",
@@ -203,6 +204,7 @@
     "vite-plugin-node-polyfills": "0.22.0"
   },
   "optionalDependencies": {
-    "dmg-license": "1.0.11"
+    "dmg-license": "1.0.11",
+    "register-scheme": "^0.0.2"
   }
 }
