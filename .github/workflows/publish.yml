@@ -23,13 +23,13 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
-      # Setup build tools
-      - name: Setup Visual Studio Build Tools
+      # Add Visual Studio setup specifically for native module builds
+      - name: Setup Visual Studio
         uses: microsoft/setup-msbuild@v1.1
-      - name: Setup build environment
+      # Create build directories
+      - name: Set up build environment
         shell: pwsh
         run: |
-          # Create build directories
           $buildDir = Join-Path $env:RUNNER_TEMP "build_logs"
           New-Item -Path $buildDir -ItemType Directory -Force
           
@@ -40,7 +40,7 @@ jobs:
           echo "EnforceProcessCountAcrossBuilds=true" | Out-File -FilePath $env:GITHUB_ENV -Append
           
           # Configure MSBuild
-          echo "MSBUILD_ARGS=/p:TrackFileAccess=false /p:CLToolExe=cl.exe /p:CLToolPath=`"C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.43.34808\bin\Hostx64\x64`" /nr:false" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "MSBUILD_ARGS=/p:TrackFileAccess=false /p:CLToolExe=cl.exe /p:CLToolPath=\"C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.43.34808\bin\Hostx64\x64\" /nr:false" | Out-File -FilePath $env:GITHUB_ENV -Append
           
           # Set paths
           echo "VCTargetsPath=C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Microsoft\VC\v170" | Out-File -FilePath $env:GITHUB_ENV -Append
@@ -73,25 +73,27 @@ jobs:
         run: pnpm store prune || true
       - name: Install dependencies
         run: pnpm i --no-frozen-lockfile --fetch-timeout 600000
-      - name: Create tracker directory
+      # Create tracking folder for native module build
+      - name: Create tracking folder
         shell: pwsh
         run: New-Item -Path "${{ runner.temp }}\tracker" -ItemType Directory -Force
-      # Build and package in one step
-      - name: Build and Package Windows app
+      # Build and package - using environment variables for MSBuild/VC++
+      - name: Build app
+        run: pnpm build
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          PreferredToolArchitecture: x64
+          VisualStudioVersion: 17
+          UseEnv: true
+      # Set GYP environment variables for native module build
+      - name: Package Windows app
         run: |
-          pnpm build
           set "GYP_MSVS_VERSION=2022" && set "GYP_MSVS_OVERRIDE_PATH=C:\Program Files\Microsoft Visual Studio\2022\Enterprise" && pnpm dist:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_OPTIONS: "--max_old_space_size=4096"
           ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
-          TrackFileAccess: false
-          UseMultiToolTask: true
-          EnforceProcessCountAcrossBuilds: true
-          PreferredToolArchitecture: x64
-          VisualStudioVersion: 17.0
-          UseEnv: true
-
   publish-linux:
     strategy:
       matrix:
@@ -123,15 +125,11 @@ jobs:
         run: pnpm store prune || true
       - name: Install dependencies
         run: pnpm i --no-frozen-lockfile --fetch-timeout 600000
-      - run: pnpm dist:linux
+      - name: Build and package Linux app
+        run: pnpm dist:linux
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_OPTIONS: "--max_old_space_size=4096"
-      - name: Build Linux app
-        run: pnpm run dist:linux
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   publish-mac:
     strategy:
       matrix:
@@ -169,7 +167,8 @@ jobs:
         run: pnpm store prune || true
       - name: Install dependencies
         run: pnpm i --no-frozen-lockfile --fetch-timeout 600000
-      - run: pnpm dist:mac
+      - name: Build and package macOS app
+        run: pnpm dist:mac
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_OPTIONS: "--max_old_space_size=4096"
@@ -177,11 +176,6 @@ jobs:
           # APPLE_ID_PASS: ${{ secrets.APPLE_ID_PASS }}
           # CSC_LINK: ${{ secrets.CSC_LINK }}
           # CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-      - name: Build macOS app
-        run: pnpm run dist:mac
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   publish-docs:
     runs-on: ubuntu-latest
     permissions:
