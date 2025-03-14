@@ -5,7 +5,7 @@ import { FS_METADATA } from '@/common/temp_fs_metadata';
 
 export const searchExtensionState = atom({
   key: 'searchSearchExtensionState',
-  default: FS_METADATA.id,
+  default: 'all',
 });
 
 export const addModalSeriesState = atom({
@@ -46,4 +46,9 @@ export const showingFilterDrawerState = atom({
 export const filterValuesMapState = atom<{ [extensionId: string]: FilterValues }>({
   key: 'searchFilterValuesMapState',
   default: {},
+});
+
+export const enabledProvidersState = atom<string[]>({
+  key: 'enabledProvidersState',
+  default: [], // Will be initialized with MangaDex ID when extension list is loaded
 });

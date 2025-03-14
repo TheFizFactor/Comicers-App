@@ -74,6 +74,7 @@ export default function App() {
   const [updateProgress, setUpdateProgress] = useState<UpdateProgress | null>(null);
   const [releaseNotes, setReleaseNotes] = useState<string>('Loading release notes...');
   const [isDownloading, setIsDownloading] = useState(false);
+  const [showDisplayIssueNotice, setShowDisplayIssueNotice] = useState(false);
   const setSeriesList = useSetRecoilState(seriesListState);
   const setCategoryList = useSetRecoilState(categoryListState);
   const setRunning = useSetRecoilState(runningState);
@@ -139,6 +140,18 @@ export default function App() {
     });
   }, [isOnline]);
 
+  // Add this to the existing useEffect that handles location changes
+  useEffect(() => {
+    const handleRouteChange = () => {
+      // Show notice when navigating from reader
+      if (window.location.hash.includes(routes.READER)) {
+        setShowDisplayIssueNotice(true);
+      }
+    };
+    window.addEventListener('hashchange', handleRouteChange);
+    return () => window.removeEventListener('hashchange', handleRouteChange);
+  }, []);
+
   const handleUpdateDownload = () => {
     setIsDownloading(true);
     ipcRenderer.invoke(ipcChannels.APP.PERFORM_UPDATE);
@@ -156,122 +169,136 @@ export default function App() {
 
   return (
     <>
-      <Toaster />
+      {showDisplayIssueNotice && (
+        <div className="fixed top-0 left-0 right-0 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-100 px-4 py-2 text-center z-[9999]">
+          If you notice any display issues, please press F5 to reload the page
+          <button 
+            onClick={() => setShowDisplayIssueNotice(false)}
+            className="ml-4 text-yellow-600 dark:text-yellow-400 hover:text-yellow-800 dark:hover:text-yellow-200"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
-      <div className="flex flex-col min-h-screen">
-        {!isOnline && (
-          <div className="flex justify-center p-2">
-            <Alert variant="destructive" className="w-fit rounded-full bg-yellow-500/10 border-yellow-500">
-              <AlertDescription className="flex items-center space-x-2 px-2 text-yellow-500">
-                <WifiOffIcon className="w-4 h-4" />
-                <span>You are currently offline. Some features may be unavailable.</span>
-              </AlertDescription>
-            </Alert>
-          </div>
-        )}
+      <div className={showDisplayIssueNotice ? "pt-10" : ""}>
+        <Toaster />
 
-        <AlertDialog open={showUpdateAvailableDialog} onOpenChange={setShowUpdateAvailableDialog}>
-          <AlertDialogContent className="sm:max-w-[525px]">
-            <AlertDialogHeader>
-              <AlertDialogTitle>Update available</AlertDialogTitle>
-              <AlertDialogDescription>
-                A new version of Comicers is available. Would you like to update now?
-              </AlertDialogDescription>
-            </AlertDialogHeader>
+        <div className="flex flex-col min-h-screen">
+          {!isOnline && (
+            <div className="flex justify-center p-2">
+              <Alert variant="destructive" className="w-fit rounded-full bg-yellow-500/10 border-yellow-500">
+                <AlertDescription className="flex items-center space-x-2 px-2 text-yellow-500">
+                  <WifiOffIcon className="w-4 h-4" />
+                  <span>You are currently offline. Some features may be unavailable.</span>
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
 
-            {updateInfo && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm">
-                    Version {updateInfo.version} • Released{' '}
-                    {new Date(updateInfo.releaseDate).toLocaleDateString()}
-                  </p>
-                  {isDownloading && updateProgress && (
-                    <p className="text-sm text-muted-foreground">
-                      {Math.round(updateProgress.percent)}%
-                    </p>
-                  )}
-                </div>
-
-                {isDownloading && (
-                  <Progress value={updateProgress?.percent || 0} className="w-full" />
-                )}
-
-                <div className="bg-muted rounded-lg p-4">
-                  <h4 className="text-sm font-medium mb-2">Release Notes</h4>
-                  <ScrollArea className="h-[200px] w-full rounded border p-4">
-                    <div className="text-sm whitespace-pre-wrap">{releaseNotes}</div>
-                  </ScrollArea>
-                </div>
-              </div>
-            )}
-
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDownloading}>Not now</AlertDialogCancel>
-              
-              <Select onValueChange={(value) => handleScheduleUpdate(Number(value))}>
-                <SelectTrigger className="w-[180px]" disabled={isDownloading}>
-                  <ClockIcon className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="Schedule..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {SCHEDULE_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.ms.toString()}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <AlertDialogAction
-                onClick={handleUpdateDownload}
-                disabled={isDownloading}
-                className="relative"
-              >
-                {isDownloading ? (
-                  <>
-                    <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
-                    Downloading...
-                  </>
-                ) : (
-                  'Download & Install'
-                )}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        <AlertDialog open={showUpdateDownloadedDialog} onOpenChange={setShowUpdateDownloadedDialog}>
-          <AlertDialogContent className="sm:max-w-[425px]">
-            <AlertDialogHeader>
-              <AlertDialogTitle>Restart required</AlertDialogTitle>
-              {updateInfo && (
+          <AlertDialog open={showUpdateAvailableDialog} onOpenChange={setShowUpdateAvailableDialog}>
+            <AlertDialogContent className="sm:max-w-[525px]">
+              <AlertDialogHeader>
+                <AlertDialogTitle>Update available</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Comicers needs to restart to finish installing updates.
+                  A new version of Comicers is available. Would you like to update now?
                 </AlertDialogDescription>
-              )}
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Not now</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => ipcRenderer.invoke(ipcChannels.APP.UPDATE_AND_RESTART)}
-              >
-                Restart
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+              </AlertDialogHeader>
 
-        {loading ? (
-          <AppLoading />
-        ) : (
-          <Router>
-            <Routes>
-              <Route path={`${routes.READER}/:series_id/:chapter_id`} element={<ReaderPage />} />
-              <Route path="*" element={<DashboardPage />} />
-            </Routes>
-          </Router>
-        )}
+              {updateInfo && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm">
+                      Version {updateInfo.version} • Released{' '}
+                      {new Date(updateInfo.releaseDate).toLocaleDateString()}
+                    </p>
+                    {isDownloading && updateProgress && (
+                      <p className="text-sm text-muted-foreground">
+                        {Math.round(updateProgress.percent)}%
+                      </p>
+                    )}
+                  </div>
+
+                  {isDownloading && (
+                    <Progress value={updateProgress?.percent || 0} className="w-full" />
+                  )}
+
+                  <div className="bg-muted rounded-lg p-4">
+                    <h4 className="text-sm font-medium mb-2">Release Notes</h4>
+                    <ScrollArea className="h-[200px] w-full rounded border p-4">
+                      <div className="text-sm whitespace-pre-wrap">{releaseNotes}</div>
+                    </ScrollArea>
+                  </div>
+                </div>
+              )}
+
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isDownloading}>Not now</AlertDialogCancel>
+                
+                <Select onValueChange={(value) => handleScheduleUpdate(Number(value))}>
+                  <SelectTrigger className="w-[180px]" disabled={isDownloading}>
+                    <ClockIcon className="mr-2 h-4 w-4" />
+                    <SelectValue placeholder="Schedule..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SCHEDULE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.ms.toString()}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <AlertDialogAction
+                  onClick={handleUpdateDownload}
+                  disabled={isDownloading}
+                  className="relative"
+                >
+                  {isDownloading ? (
+                    <>
+                      <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                      Downloading...
+                    </>
+                  ) : (
+                    'Download & Install'
+                  )}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <AlertDialog open={showUpdateDownloadedDialog} onOpenChange={setShowUpdateDownloadedDialog}>
+            <AlertDialogContent className="sm:max-w-[425px]">
+              <AlertDialogHeader>
+                <AlertDialogTitle>Restart required</AlertDialogTitle>
+                {updateInfo && (
+                  <AlertDialogDescription>
+                    Comicers needs to restart to finish installing updates.
+                  </AlertDialogDescription>
+                )}
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Not now</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => ipcRenderer.invoke(ipcChannels.APP.UPDATE_AND_RESTART)}
+                >
+                  Restart
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          {loading ? (
+            <AppLoading />
+          ) : (
+            <Router>
+              <Routes>
+                <Route path={`${routes.READER}/:series_id/:chapter_id`} element={<ReaderPage />} />
+                <Route path="*" element={<DashboardPage />} />
+              </Routes>
+            </Router>
+          )}
+        </div>
       </div>
     </>
   );

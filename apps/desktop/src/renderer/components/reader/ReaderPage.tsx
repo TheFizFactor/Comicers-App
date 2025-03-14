@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Mousetrap from 'mousetrap';
 const { ipcRenderer } = require('electron');
@@ -17,6 +17,8 @@ import library from '@/renderer/services/library';
 import * as libraryStates from '@/renderer/state/libraryStates';
 import * as readerStates from '@/renderer/state/readerStates';
 import * as settingStates from '@/renderer/state/settingStates';
+import { readingStatsService } from '@/renderer/services/readingStats';
+import { currentReadingSessionState } from '@/renderer/state/readingStatsStates';
 import {
   nextOffsetPages,
   nextPageStyle,
@@ -35,7 +37,9 @@ type ParamTypes = {
 };
 
 const ReaderPage: React.FC = () => {
-  const { series_id, chapter_id } = useParams<ParamTypes>();
+  const params = useParams<ParamTypes>();
+  const series_id = params.series_id!;
+  const chapter_id = params.chapter_id!;
   const navigate = useNavigate();
   const location = useLocation();
   const setTitlebarText = useSetRecoilState(libraryStates.titlebarTextState);
@@ -43,6 +47,7 @@ const ReaderPage: React.FC = () => {
   const setLibrarySeries = useSetRecoilState(libraryStates.seriesState);
   const [readerSeries, setReaderSeries] = useRecoilState(readerStates.seriesState);
   const [readerChapter, setReaderChapter] = useRecoilState(readerStates.chapterState);
+  const [currentSession, setCurrentSession] = useRecoilState(currentReadingSessionState);
 
   const [pageNumber, setPageNumber] = useRecoilState(readerStates.pageNumberState);
   const [lastPageNumber, setLastPageNumber] = useRecoilState(readerStates.lastPageNumberState);
@@ -88,6 +93,7 @@ const ReaderPage: React.FC = () => {
   const keyToggleFullscreen = useRecoilValue(settingStates.keyToggleFullscreenState);
   const keyExit = useRecoilValue(settingStates.keyExitState);
   const keyCloseOrBack = useRecoilValue(settingStates.keyCloseOrBackState);
+  const [showDisplayIssueNotice, setShowDisplayIssueNotice] = useState(false);
 
   /**
    * Populate the relevantChapterList prop.
@@ -205,6 +211,13 @@ const ReaderPage: React.FC = () => {
     const series: Series | null = library.fetchSeries(seriesId);
     if (chapter === null || series === null) return;
 
+    // Start new reading session
+    if (currentSession) {
+      readingStatsService.endSession(currentSession, pageNumber);
+    }
+    const session = readingStatsService.startSession(seriesId, chapterId);
+    setCurrentSession(session);
+
     createLanguageChapterList(series, chapter);
     createRelevantChapterList(series, chapter);
 
@@ -290,7 +303,7 @@ const ReaderPage: React.FC = () => {
     setPageUrls([]);
     setLastPageNumber(0);
 
-    loadChapterData(id, series_id!, desiredPage);
+    loadChapterData(id, series_id, desiredPage);
   };
 
   /**
@@ -346,6 +359,12 @@ const ReaderPage: React.FC = () => {
    * If the series prop is loaded, go to its series detail page. Otherwise, go to the library.
    */
   const exitPage = () => {
+    // End current reading session if exists
+    if (currentSession) {
+      readingStatsService.endSession(currentSession, pageNumber);
+      setCurrentSession(null);
+    }
+
     setReaderSeries(undefined);
     setReaderChapter(undefined);
     setPageNumber(1);
@@ -361,6 +380,9 @@ const ReaderPage: React.FC = () => {
     if (discordPresenceEnabled) {
       ipcRenderer.invoke(ipcChannels.INTEGRATION.DISCORD_SET_ACTIVITY).catch(console.error);
     }
+
+    // Set display issue notice before navigation
+    setShowDisplayIssueNotice(true);
 
     if (readerSeries !== undefined) {
       navigate(`${routes.SERIES}/${readerSeries.id}`);
@@ -509,6 +531,8 @@ const ReaderPage: React.FC = () => {
     if (
       readerSeries !== undefined &&
       readerChapter !== undefined &&
+      readerSeries.id &&
+      readerChapter.id &&
       languageChapterList.every(
         (chapter) => readerChapter.chapterNumber === chapter.chapterNumber,
       ) &&
@@ -526,6 +550,16 @@ const ReaderPage: React.FC = () => {
         );
         setReaderChapter({ ...readerChapter, read: true });
         if (trackerAutoUpdate) sendProgressToTrackers(readerChapter, readerSeries);
+
+        // Mark chapter as completed for stats
+        readingStatsService.markChapterAsCompleted(readerSeries.id, readerChapter.id);
+
+        // Update reading stats when chapter is completed
+        if (currentSession) {
+          readingStatsService.endSession(currentSession, pageNumber);
+          const newSession = readingStatsService.startSession(readerSeries.id, readerChapter.id);
+          setCurrentSession(newSession);
+        }
       }
     }
 
@@ -559,7 +593,9 @@ const ReaderPage: React.FC = () => {
 
   useEffect(() => {
     addKeybindings();
-    loadChapterData(chapter_id!, series_id!);
+    if (series_id && chapter_id) {
+      loadChapterData(chapter_id, series_id);
+    }
   }, [location]);
 
   // Add cleanup effect when component unmounts
@@ -596,6 +632,11 @@ const ReaderPage: React.FC = () => {
         } as React.CSSProperties
       }
     >
+      {showDisplayIssueNotice && (
+        <div className="fixed top-0 left-0 right-0 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-100 px-4 py-2 text-center z-50">
+          If you notice any display issues, please press F5 to reload the page
+        </div>
+      )}
       <ReaderSidebar
         changePage={changePage}
         setChapter={setChapter}
@@ -604,7 +645,7 @@ const ReaderPage: React.FC = () => {
         exitPage={exitPage}
       />
 
-      <div className="w-full outline-none" tabIndex={0}>
+      <div className="pt-5 pb-4 w-full outline-none" tabIndex={0}>
         <Dialog open={showingSettingsModal} onOpenChange={setShowingSettingsModal}>
           <SettingsDialogContent defaultPage={SettingsPage.Reader} />
         </Dialog>

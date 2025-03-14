@@ -135,6 +135,7 @@ const SearchControlBar: React.FC<Props> = (props: Props) => {
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
+            <SelectItem value="all">All Providers</SelectItem>
             {props.extensionList
               .map((metadata: ExtensionMetadata) => ({
                 value: metadata.id,

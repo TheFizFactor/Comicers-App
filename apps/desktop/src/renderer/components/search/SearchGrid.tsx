@@ -30,7 +30,7 @@ type Props = {
   handleSearch: (fresh?: boolean) => void;
 };
 
-const SearchGrid: React.FC<Props> = (props: Props) => {
+const SearchGrid: React.FC<Props> = (props: Props): JSX.Element => {
   const viewportRef = useRef<HTMLDivElement>(null);
   const searchResult = useRecoilValue(searchResultState);
   const libraryColumns = useRecoilValue(libraryColumnsState);
@@ -46,42 +46,34 @@ const SearchGrid: React.FC<Props> = (props: Props) => {
     setShowingAddModal(!showingAddModal);
   };
 
-  const renderSeriesGrid = () => {
-    return searchResult.seriesList.map((series: Series) => {
-      return (
-        <div key={`${series.id}-${series.title}`} className="space-y-2">
-          <ContextMenu>
-            <ContextMenuTrigger>
-              <div
-                className="relative overflow-hidden cursor-pointer"
-                onClick={() => handleOpenAddModal(series)}
-              >
-                <ExtensionImage
-                  url={series.remoteCoverUrl}
-                  series={series}
-                  alt={series.title}
-                  className={cn(
-                    'hover:scale-105',
-                    libraryCropCovers && 'aspect-[70/100]',
-                    'h-auto w-full object-cover rounded-md transition-transform',
-                  )}
-                />
-                <div
-                  className="absolute bottom-0 left-0 right-0 p-2 flex items-end"
-                  style={{
-                    textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 0, 0, 0.5)',
-                  }}
-                >
-                  <span className="line-clamp-3 text-white text-xs font-bold">{series.title}</span>
-                </div>
-              </div>
-            </ContextMenuTrigger>
-            <SearchGridContextMenu series={series} viewDetails={() => handleOpenAddModal(series)} />
-          </ContextMenu>
+  const renderSeriesGrid = () =>
+    searchResult.seriesList.map((series, i) => (
+      <div
+        key={`${series.id}-${i}`}
+        className="group relative cursor-pointer"
+        onClick={() => handleOpenAddModal(series)}
+      >
+        <div className="relative aspect-[2/3] overflow-hidden rounded-lg">
+          <img
+            src={series.remoteCoverUrl}
+            alt={series.title}
+            className={cn(
+              'h-full w-full object-cover transition-all hover:scale-105',
+              libraryCropCovers && 'object-cover',
+              !libraryCropCovers && 'object-contain',
+            )}
+          />
+          {(series as any).provider && (
+            <div className="absolute top-2 right-2 bg-black/60 text-white px-2 py-1 text-xs rounded">
+              {(series as any).provider}
+            </div>
+          )}
         </div>
-      );
-    });
-  };
+        <div className="mt-2">
+          <p className="font-medium text-sm truncate">{series.title}</p>
+        </div>
+      </div>
+    ));
 
   const renderLoadingSkeleton = () => {
     const amount =

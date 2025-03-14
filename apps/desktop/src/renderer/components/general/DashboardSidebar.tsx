@@ -28,7 +28,7 @@ import {
   LibraryBig,
   PencilIcon,
   Settings,
-  SquarePlus,
+  Compass,
   Trash2Icon,
 } from 'lucide-react';
 import {
@@ -116,6 +116,13 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
         <SidebarGroup>
           {/* <SidebarGroupLabel>Platform</SidebarGroupLabel> */}
           <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={() => navigate('/')}>
+                <Home />
+                <span>Home</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
             <Collapsible asChild defaultOpen={true} className="group/collapsible">
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
@@ -190,7 +197,7 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
 
             <SidebarMenuItem>
               <SidebarMenuButton onClick={() => navigate(routes.SEARCH)}>
-                <SquarePlus />
+                <Compass />
                 <span>Explorer</span>
               </SidebarMenuButton>
             </SidebarMenuItem>

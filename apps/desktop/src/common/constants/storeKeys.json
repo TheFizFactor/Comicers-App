@@ -12,5 +12,11 @@
     "READER_PREFIX": "settings.reader.",
     "TRACKER_PREFIX": "settings.tracker.",
     "INTEGRATION_PREFIX": "settings.integration."
+  },
+  "READING_STATS": {
+    "SESSIONS": "reading.sessions",
+    "DAILY_STATS": "reading.daily_stats",
+    "STREAKS": "reading.streaks",
+    "COMPLETED_CHAPTERS": "reading.completed_chapters"
   }
 }

@@ -7,6 +7,7 @@ import {
   NotebookTextIcon,
   SettingsIcon,
   ToyBrickIcon,
+  BarChartIcon,
 } from 'lucide-react';
 
 import {
@@ -35,8 +36,10 @@ import { SettingsReader } from './SettingsReader';
 import { SettingsKeybinds } from './SettingsKeybinds';
 import { SettingsIntegrations } from './SettingsIntegrations';
 import { SettingsTrackers } from './SettingsTrackers';
+import { SettingsStats } from './SettingsStats';
 
 export enum SettingsPage {
+  Stats = 'Stats',
   General = 'General',
   Library = 'Library',
   Reader = 'Reader',
@@ -54,6 +57,7 @@ type SettingsPageProps = {
 };
 
 const PAGES: { [key in SettingsPage]: SettingsPageProps } = {
+  [SettingsPage.Stats]: { name: 'Stats', icon: BarChartIcon, component: SettingsStats },
   [SettingsPage.General]: { name: 'General', icon: SettingsIcon, component: SettingsGeneral },
   [SettingsPage.Library]: { name: 'Library', icon: LibraryBigIcon, component: SettingsLibrary },
   [SettingsPage.Reader]: { name: 'Reader', icon: BookOpenIcon, component: SettingsReader },

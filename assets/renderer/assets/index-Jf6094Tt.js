@@ -42815,7 +42815,7 @@ const DashboardPage = () => {
       },
       children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx(DashboardSidebar, {}),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "px-2 w-full", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Routes, { children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "pt-4 px-2 w-full", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Routes, { children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: `${routes.SERIES}/:id`, element: /* @__PURE__ */ jsxRuntimeExports.jsx(SeriesDetails, {}) }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: `${routes.SEARCH}/*`, element: /* @__PURE__ */ jsxRuntimeExports.jsx(Search, {}) }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: `${routes.PLUGINS}/*`, element: /* @__PURE__ */ jsxRuntimeExports.jsx(Plugins, {}) }),
