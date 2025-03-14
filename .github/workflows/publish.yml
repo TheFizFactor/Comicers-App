@@ -45,18 +45,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-electron-cache-
       
-      # Set up package.json to avoid native module compilation
-      - name: Create .npmrc file for native modules
+      # Configure npm registry options
+      - name: Configure npm registry
         run: |
-          echo "msvs_version=2022" > .npmrc
-          echo "python=python3" >> .npmrc
-          echo "target_arch=x64" >> .npmrc
-          
-          # Configure npm registry
           npm config set registry http://registry.npmjs.org/
           npm config set strict-ssl false
       
-      # Install dependencies with the --ignore-scripts flag to avoid native module compilation
+      # Install dependencies using pnpm --ignore-scripts to avoid native module compilation initially
       - name: Install dependencies
         run: |
           pnpm i --no-frozen-lockfile --fetch-timeout 600000 --ignore-scripts
@@ -64,15 +59,46 @@ jobs:
         env:
           NODE_OPTIONS: "--max_old_space_size=4096"
       
-      # Fix the problematic modules by installing pre-built versions
-      - name: Install pre-built native modules
+      # Create a modified package.json with fixed dependencies
+      - name: Fix workspace dependencies
+        shell: pwsh
+        run: |
+          # Create minimal package.json for native module installation
+          cd apps/desktop
+          $packageJson = Get-Content -Raw -Path package.json | ConvertFrom-Json
+          
+          # Create a temporary package.json without workspace references for npm install
+          $tempPackage = @{
+            name = $packageJson.name
+            dependencies = @{}
+          }
+          
+          # Convert to JSON and save
+          $tempPackage | ConvertTo-Json -Depth 10 > temp-package.json
+      
+      # Install problematic modules with npm directly
+      - name: Install native modules
         run: |
           cd apps/desktop
-          npm install --save-optional bufferutil@4.0.9 --no-save --no-package-lock
-          npm install --save-optional utf-8-validate@6.0.5 --no-save --no-package-lock
-          npm install --save-optional register-scheme@0.0.2 --no-save --no-package-lock
+          npm install --save-optional bufferutil@4.0.9
+          npm install --save-optional utf-8-validate@6.0.5
+          npm install --save-optional register-scheme@0.0.2
         env:
           npm_config_build_from_source: false
+      
+      # Patch electron-builder to skip native module rebuilds
+      - name: Patch electron-builder config
+        shell: pwsh
+        run: |
+          # Create or update .electronbuildrc in the desktop folder
+          cd apps/desktop
+          @"
+          {
+            "electronVersion": "22.3.3",
+            "npmRebuild": false,
+            "buildDependenciesFromSource": false
+          }
+          "@ | Out-File -FilePath .electronbuildrc -Encoding utf8
       
       # Build the app
       - name: Build app
@@ -81,7 +107,7 @@ jobs:
           NODE_OPTIONS: "--max_old_space_size=4096"
           ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
       
-      # Package the app for Windows
+      # Package with modified environment variables to avoid native rebuilds
       - name: Package Windows app
         run: |
           cd apps/desktop && cross-env ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES=1 pnpm dist:win
@@ -90,6 +116,7 @@ jobs:
           NODE_OPTIONS: "--max_old_space_size=4096"
           ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
           npm_config_build_from_source: false
+          ELECTRON_BUILDER_SKIP_REBUILD: true
           
   publish-linux:
     strategy:
