@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ExtensionMetadata, FilterOption, Series, SeriesListResponse } from '@tiyo/common';
 const { ipcRenderer } = require('electron');
 import { useRecoilState, useRecoilValue } from 'recoil';
-import AddSeriesModal from './AddSeriesModal';
+import ExplorerModal from './ExplorerModal';
 import { FS_METADATA } from '@/common/temp_fs_metadata';
 import ipcChannels from '@/common/constants/ipcChannels.json';
 import {
@@ -113,7 +113,7 @@ const Search: React.FC = () => {
 
   return (
     <>
-      <AddSeriesModal
+      <ExplorerModal
         showing={showingAddModal}
         setShowing={(showing) => {
           setShowingAddModal(showing);

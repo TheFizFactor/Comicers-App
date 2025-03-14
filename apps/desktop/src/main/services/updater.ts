@@ -56,7 +56,7 @@ export const createUpdaterIpcHandlers = (ipcMain: IpcMain) => {
     try {
       // This assumes your releases are on GitHub. Adjust the URL if using a different platform
       const response = await axios.get(
-        `https://api.github.com/repos/comicers/comicers/releases/tags/v${version}`,
+        `https://api.github.com/repos/TheFizFactor/Comicers-App/releases/tags/v${version}`,
       );
       return response.data.body || 'No release notes available.';
     } catch (error) {

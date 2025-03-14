@@ -36470,7 +36470,7 @@ const SeriesDetails = () => {
   ] }) });
 };
 const { ipcRenderer: ipcRenderer$k } = require("electron");
-const AddSeriesModal = (props) => {
+const ExplorerModal = (props) => {
   const navigate = useNavigate();
   const [customSeries, setCustomSeries] = reactExports.useState();
   const [loadingDetails, setLoadingDetails] = reactExports.useState(true);
@@ -36481,11 +36481,11 @@ const AddSeriesModal = (props) => {
     setLoadingDetails(true);
     if (props.series !== void 0) {
       console.debug(
-        `AddSeriesModal is retrieving details for series ${props.series.sourceId} from extension ${props.series.extensionId}`
+        `ExplorerModal is retrieving details for series ${props.series.sourceId} from extension ${props.series.extensionId}`
       );
       ipcRenderer$k.invoke(ipcChannels.EXTENSION.GET_SERIES, props.series.extensionId, props.series.sourceId).then((series) => {
         if (series !== void 0) {
-          console.debug(`AddSeriesModal found matching series ${series?.sourceId}`);
+          console.debug(`ExplorerModal found matching series ${series?.sourceId}`);
           setCustomSeries(series);
         }
         return series;
@@ -37182,7 +37182,7 @@ const Search = () => {
   if (extensionList.length === 0) return /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, {});
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(
-      AddSeriesModal,
+      ExplorerModal,
       {
         showing: showingAddModal,
         setShowing: (showing) => {
@@ -38069,7 +38069,7 @@ const Library = () => {
       " ",
       "from the tab on the left, and then go to",
       " ",
-      /* @__PURE__ */ jsxRuntimeExports.jsx("code", { className: "relative bg-muted px-[0.3rem] py-[0.2rem] text-sm font-semibold", children: "Add Series" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("code", { className: "relative bg-muted px-[0.3rem] py-[0.2rem] text-sm font-semibold", children: "Explorer" }),
       " ",
       "to start building your library."
     ] }) }) });
@@ -42685,7 +42685,7 @@ function DashboardSidebar({ ...props }) {
         ] }) }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(SidebarMenuItem, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(SidebarMenuButton, { onClick: () => navigate(routes.SEARCH), children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx(SquarePlus, {}),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Add Series" })
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Explorer" })
         ] }) }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(SidebarMenuItem, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(SidebarMenuButton, { onClick: () => navigate(routes.PLUGINS), children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx(Blocks, {}),
@@ -42745,7 +42745,7 @@ function DashboardSidebar({ ...props }) {
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { children: [
           "Comicers is a desktop manga reader. To add a series to your library, click the",
           " ",
-          /* @__PURE__ */ jsxRuntimeExports.jsx("code", { className: "relative bg-muted px-[0.3rem] py-[0.2rem] text-sm font-semibold", children: "Add Series" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("code", { className: "relative bg-muted px-[0.3rem] py-[0.2rem] text-sm font-semibold", children: "Explorer" }),
           " ",
           "tab on the left panel and search for the series from a supported content source. To add more content sources, install a",
           " ",

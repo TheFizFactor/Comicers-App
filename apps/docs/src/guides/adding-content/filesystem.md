@@ -4,7 +4,7 @@ Adding content from your filesystem.
 
 ## Importing a series
 
-1. Go to the `Add Series` page.
+1. Go to the `Explorer` page.
 2. Select `filesystem` from the dropdown and click `Select Directory`. Optionally select
 "Multi-series mode", which can be used for a directory with multiple series.
 3. Edit the series details (title, description, etc.) from the popup dialog, and click

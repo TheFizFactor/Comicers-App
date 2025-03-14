@@ -191,7 +191,7 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
             <SidebarMenuItem>
               <SidebarMenuButton onClick={() => navigate(routes.SEARCH)}>
                 <SquarePlus />
-                <span>Add Series</span>
+                <span>Explorer</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
@@ -271,7 +271,7 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
                   <p>
                     Comicers is a desktop manga reader. To add a series to your library, click the{' '}
                     <code className="relative bg-muted px-[0.3rem] py-[0.2rem] text-sm font-semibold">
-                      Add Series
+                      Explorer
                     </code>{' '}
                     tab on the left panel and search for the series from a supported content source.
                     To add more content sources, install a{' '}

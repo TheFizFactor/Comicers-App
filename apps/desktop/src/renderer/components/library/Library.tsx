@@ -154,7 +154,7 @@ const Library: React.FC<Props> = () => {
             </code>{' '}
             from the tab on the left, and then go to{' '}
             <code className="relative bg-muted px-[0.3rem] py-[0.2rem] text-sm font-semibold">
-              Add Series
+              Explorer
             </code>{' '}
             to start building your library.
           </p>

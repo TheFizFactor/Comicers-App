@@ -13,7 +13,7 @@ Add manga from your filesystem, or install a plugin to discover external content
 
 :::tabs
 == Local filesystem
-To import your local collection, go to the `Add Series` page and select the `filesystem` source.
+To import your local collection, go to the `Explorer` page and select the `filesystem` source.
 You can import an individual series or an entire collection at once.
 
 For more info, see [Adding from Local Filesystem](./adding-content/filesystem)
@@ -21,7 +21,7 @@ For more info, see [Adding from Local Filesystem](./adding-content/filesystem)
 Comicers allows you to import manga from 3rd-party websites, called "content sources".
 1. **Install a plugin**. Go to the `Plugins` page and install a plugin. Plugins add support for multiple
 content sources.
-2. **Add a series**. Go to the `Add Series` page and select a source from the dropdown. Search for
+2. **Add a series**. Go to the `Explorer` page and select a source from the dropdown. Search for
 a series to add to your library.
 
 For more info, see [Adding from Websites](./adding-content/websites)
