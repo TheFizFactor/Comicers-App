@@ -48,36 +48,42 @@ export const HomePage: React.FC = () => {
     const navigate = useNavigate();
     const [releases, setReleases] = useState<ReleaseInfo[]>([]);
     const [loading, setLoading] = useState(true);
+    const [retryCount, setRetryCount] = useState(0);
     const seriesList = useRecoilValue(seriesListState);
     const readingLists = useRecoilValue(readingListsState);
     const [recentlyRead, setRecentlyRead] = useState<any[]>([]);
     const [stats, setStats] = useState(() => readingStatsService.getStats());
 
+    const fetchReleaseNotes = async () => {
+        setLoading(true);
+        try {
+            const notes = await ipcRenderer.invoke(ipcChannels.APP.GET_RELEASE_NOTES);
+            setReleases([{
+                version: 'Latest',
+                releaseDate: new Date().toLocaleDateString(),
+                notes: notes
+            }]);
+        } catch (error: any) {
+            console.error('Failed to fetch release notes:', error);
+            setReleases([{
+                version: 'Latest',
+                releaseDate: new Date().toLocaleDateString(),
+                notes: error.response?.status === 403 
+                    ? 'GitHub API rate limit exceeded. Please try again in a few minutes.'
+                    : 'Failed to load release notes. Please check your connection.'
+            }]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRetry = () => {
+        setRetryCount(prev => prev + 1);
+        fetchReleaseNotes();
+    };
+
     useEffect(() => {
-        // Fetch the latest releases from GitHub
-        ipcRenderer
-            .invoke(ipcChannels.APP.GET_RELEASE_NOTES)
-            .then((notes: string) => {
-                setReleases([
-                    {
-                        version: 'Latest',
-                        releaseDate: new Date().toLocaleDateString(),
-                        notes: notes
-                    }
-                ]);
-                setLoading(false);
-            })
-            .catch((error) => {
-                console.error('Failed to fetch release notes:', error);
-                setReleases([{
-                    version: 'Latest',
-                    releaseDate: new Date().toLocaleDateString(),
-                    notes: error.response?.status === 403 
-                        ? 'Unable to fetch release notes due to rate limiting. Please try again later.'
-                        : 'Failed to load release notes. Please check your connection and try again.'
-                }]);
-                setLoading(false);
-            });
+        fetchReleaseNotes();
 
         // Get recently read series (placeholder - implement actual tracking)
         const recent = seriesList
@@ -317,6 +323,16 @@ export const HomePage: React.FC = () => {
                                         <div className="prose prose-sm max-w-none">
                                             <div className="whitespace-pre-wrap text-sm text-muted-foreground">
                                                 {release.notes}
+                                                {release.notes.includes('rate limit exceeded') && (
+                                                    <Button
+                                                        variant="link"
+                                                        className="mt-2 p-0"
+                                                        onClick={handleRetry}
+                                                        disabled={loading}
+                                                    >
+                                                        Retry
+                                                    </Button>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
