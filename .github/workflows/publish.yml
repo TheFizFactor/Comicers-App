@@ -49,6 +49,11 @@ jobs:
           # Set node-gyp environment variables 
           echo "GYP_MSVS_VERSION=2022" >> $env:GITHUB_ENV
           echo "PYTHON=python3" >> $env:GITHUB_ENV
+          
+          # Fix the missing slash issue in Platform.props path
+          echo "npm_config_msvs_version=2022" >> $env:GITHUB_ENV
+          echo "npm_config_platform=win32" >> $env:GITHUB_ENV
+          echo "npm_config_arch=x64" >> $env:GITHUB_ENV
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -70,6 +75,12 @@ jobs:
         run: |
           npm config set registry http://registry.npmjs.org/
           npm config set strict-ssl false
+          npm config set msvs_version 2022
+          npm config set python python3
+          npm config set force true
+          # Use prebuilt binaries for problematic modules
+          npm config set bufferutil_binary_host_mirror https://github.com/node-modules/bufferutil/releases/download/
+          npm config set utf-8-validate_binary_host_mirror https://github.com/node-modules/utf-8-validate/releases/download/
       - name: Create pnpm store directory
         shell: pwsh
         run: New-Item -Path ".pnpm-store\v3" -ItemType Directory -Force
@@ -78,10 +89,13 @@ jobs:
       # Install cross-env package globally to help with environment variables
       - name: Install global dependencies
         run: npm install -g cross-env
-      - name: Install dependencies
+      - name: Install dependencies with prebuild binaries
         run: |
-          pnpm i --no-frozen-lockfile --fetch-timeout 600000
+          pnpm i --no-frozen-lockfile --fetch-timeout 600000 --no-optional
           cd apps/desktop && pnpm add cross-env --save-dev
+          # Install native modules with --build-from-source=false to use prebuilt binaries
+          cd apps/desktop && npm install bufferutil --build-from-source=false
+          cd apps/desktop && npm install utf-8-validate --build-from-source=false
       # Create tracking folder for native module build
       - name: Create tracking folder
         shell: pwsh
@@ -95,17 +109,20 @@ jobs:
           PreferredToolArchitecture: x64
           VisualStudioVersion: 17
           UseEnv: true
-          GYP_MSVS_VERSION: 2022
-          GYP_MSVS_OVERRIDE_PATH: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise"
+          npm_config_msvs_version: 2022
+          npm_config_node_gyp: node-gyp
+          # Skip native modules during first build
+          npm_config_build_from_source: false
       # Set GYP environment variables for native module build
       - name: Package Windows app
         run: |
-          cd apps/desktop && cross-env ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES=1 GYP_MSVS_VERSION=2022 pnpm dist:win
+          cd apps/desktop && cross-env ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES=1 npm_config_msvs_version=2022 npm_config_build_from_source=false pnpm dist:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_OPTIONS: "--max_old_space_size=4096"
           ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
-          GYP_MSVS_OVERRIDE_PATH: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise"
+          npm_config_build_from_source: false
+          npm_config_msvs_version: 2022
           
   publish-linux:
     strategy:
