@@ -4,8 +4,8 @@ permissions:
   pull-requests: write
 on:
   push:
-    branches:
-      - main
+    tags:
+      - 'v*'
 jobs:
   publish-win:
     strategy:
@@ -24,9 +24,12 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
       
-      # Add Visual Studio setup specifically for native module builds
+      # Set up Visual Studio Build Tools with required components
       - name: Setup Visual Studio
-        uses: microsoft/setup-msbuild@v1.1
+        uses: microsoft/setup-msbuild@v1.3
+      - name: Install Visual Studio Build Tools
+        run: |
+          powershell -Command "& {&'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe' modify --quiet --add Microsoft.VisualStudio.Workload.NativeDesktop --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add Microsoft.VisualStudio.Component.Windows10SDK --installPath 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise'}"
       
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -46,22 +49,23 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-electron-cache-
       
-      # First install all dependencies using pnpm, including workspace packages
-      - name: Install all dependencies with pnpm
+      # Configure npm for native module builds
+      - name: Configure build environment
+        run: |
+          npm config set msvs_version 2022
+          npm config set python python3
+          
+      # Install dependencies with native module handling
+      - name: Install dependencies
         run: |
           pnpm install --no-frozen-lockfile --fetch-timeout 600000
         env:
+          npm_config_msvs_version: 2022
+          npm_config_nodedir: ${{ env.NODE_VERSION }}
+          npm_config_target_arch: x64
+          npm_config_runtime: electron
+          npm_config_build_from_source: true
           NODE_OPTIONS: "--max_old_space_size=4096"
-          
-      # Then install native modules separately in the desktop app directory
-      - name: Install native modules
-        run: |
-          cd apps/desktop
-          pnpm remove bufferutil utf-8-validate register-scheme
-          pnpm add bufferutil@4.0.9 utf-8-validate@6.0.5
-          pnpm add register-scheme@0.0.2 --save-optional
-        env:
-          npm_config_build_from_source: false
           
       # Build the app
       - name: Build app
@@ -69,8 +73,8 @@ jobs:
         env:
           NODE_OPTIONS: "--max_old_space_size=4096"
           ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
-      
-      # Package with modified environment variables
+          
+      # Package with native module support
       - name: Package Windows app
         run: |
           cd apps/desktop && pnpm dist:win
@@ -78,7 +82,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_OPTIONS: "--max_old_space_size=4096"
           ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
-          npm_config_build_from_source: false
+          npm_config_msvs_version: 2022
+          npm_config_build_from_source: true
           
   publish-linux:
     strategy:
