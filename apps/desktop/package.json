@@ -2,7 +2,7 @@
   "name": "@comicers/desktop",
   "productName": "Comicers",
   "description": "Manga reader and library manager for the desktop",
-  "version": "2.17.0",
+  "version": "2.17.2",
   "private": true,
   "main": "./out/main/index.js",
   "scripts": {
@@ -10,7 +10,7 @@
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "lint": "biome lint src",
-    "dist:win": "cross-env ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES=1 pnpm electron-builder --publish onTagOrDraft --win",
+    "dist:win": "cross-env ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES=1 npm_config_build_from_source=false npm_config_msvs_version=2019 pnpm electron-builder --publish always --win",
     "dist:mac": "pnpm electron-builder --publish onTagOrDraft --mac",
     "dist:linux": "pnpm electron-builder --publish onTagOrDraft --linux"
   },
@@ -66,7 +66,9 @@
             "x64"
           ]
         }
-      ]
+      ],
+      "signingHashAlgorithms": null,
+      "sign": null
     },
     "nsis": {
       "oneClick": false,
@@ -205,6 +207,13 @@
   },
   "optionalDependencies": {
     "dmg-license": "1.0.11",
-    "register-scheme": "^0.0.2"
+    "register-scheme": "0.0.2"
+  },
+  "config": {
+    "buildFromSource": false,
+    "runtime": "electron",
+    "target": "32.3.3",
+    "arch": "x64",
+    "msvs_version": "2019"
   }
 }
