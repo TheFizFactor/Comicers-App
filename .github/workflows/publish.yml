@@ -1,45 +1,10 @@
-# Publish workflow - Creates draft releases for all builds
 name: Publish
-permissions:
-  contents: write
-  issues: write
-  pull-requests: write
-  packages: write
-  pages: write
-  id-token: write
 on:
   push:
     branches:
-      - main
-    tags:
-      - 'v*'
+      - master
 jobs:
-  create-tag:
-    runs-on: ubuntu-latest
-    outputs:
-      tag: ${{ steps.tag.outputs.tag }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      
-      - name: Get package version
-        id: package_version
-        run: |
-          VERSION=$(node -p "require('./apps/desktop/package.json').version")
-          echo "version=v$VERSION" >> $GITHUB_OUTPUT
-          
-      - name: Create and push tag
-        id: tag
-        run: |
-          TAG=${{ steps.package_version.outputs.version }}
-          echo "Creating tag: $TAG"
-          git tag $TAG || true
-          git push origin $TAG || true
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
-
   publish-win:
-    needs: [create-tag]
     strategy:
       matrix:
         node: ['22']
@@ -54,169 +19,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: 'pnpm'
-      
-      # Add Visual Studio setup specifically for native module builds
-      - name: Setup Visual Studio
-        uses: microsoft/setup-msbuild@v1.1
-        with:
-          vs-version: '[17.0,18.0)'
-          
-      - name: Install Visual Studio C++ workload
-        run: |
-          & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vs_installer.exe" modify `
-            --installPath "C:\Program Files\Microsoft Visual Studio\2022\Enterprise" `
-            --add Microsoft.VisualStudio.Workload.NativeDesktop `
-            --includeRecommended `
-            --quiet --norestart --force
-          
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Install Python dependencies
-        run: pip install setuptools
-          
-      # Cache electron binaries to speed up builds
-      - name: Cache Electron
-        uses: actions/cache@v3
-        with:
-          path: |
-            ${{ runner.temp }}\electron\Cache
-            ${{ runner.temp }}\electron-builder\Cache
-          key: ${{ runner.os }}-electron-cache-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-electron-cache-
-      
-      # First install all dependencies using pnpm, including workspace packages
-      - name: Install all dependencies with pnpm
-        run: |
-          pnpm install --no-frozen-lockfile --fetch-timeout 600000
-        env:
-          NODE_OPTIONS: "--max_old_space_size=4096"
-          
-      # Then install native modules separately in the desktop app directory
-      - name: Install native modules
-        run: |
-          cd apps/desktop
-          pnpm remove bufferutil utf-8-validate register-scheme
-          pnpm add bufferutil@4.0.9 utf-8-validate@6.0.5
-          pnpm add register-scheme@0.0.2 --save-optional
-        env:
-          npm_config_build_from_source: false
-          NODE_VERSION: ${{ matrix.node }}
-          npm_config_msvs_version: 2022
-          
-      # Build the app
-      - name: Build app
-        run: pnpm build
-        env:
-          NODE_OPTIONS: "--max_old_space_size=4096"
-          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
-          npm_config_msvs_version: 2022
-      
-      # Package with modified environment variables
-      - name: Package Windows app
-        run: |
-          cd apps/desktop
-          echo "Current directory:"
-          pwd
-          echo "Directory contents:"
-          dir
-          echo "Package.json contents:"
-          cat package.json
-          echo "Building app..."
-          pnpm dist:win --publish never
+      - run: pnpm i
+      - run: pnpm dist:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_OPTIONS: "--max_old_space_size=4096"
-          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
-          npm_config_build_from_source: false
-          NODE_VERSION: ${{ matrix.node }}
-          npm_config_msvs_version: 2022
-          APP_VERSION: ${{ needs.create-tag.outputs.tag }}
-          DEBUG: electron-builder
-
-      - name: List build directories
-        run: |
-          echo "Listing possible build directories:"
-          cd apps/desktop
-          echo "Current directory:"
-          dir
-          echo "Release directory (if exists):"
-          dir release || echo "No release directory"
-          echo "Dist directory (if exists):"
-          dir dist || echo "No dist directory"
-          echo "Build directory (if exists):"
-          dir build || echo "No build directory"
-          
-      - name: Upload Windows artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-artifacts
-          path: |
-            apps/desktop/release/*.exe
-            apps/desktop/release/latest*.yml
-            apps/desktop/release/*.zip
-            apps/desktop/release/*.blockmap
-
-  create-release:
-    needs: [create-tag, publish-win, publish-linux, publish-mac]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      # Download artifacts separately for better error handling
-      - name: Download Windows artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: windows-artifacts
-          path: artifacts/windows
-        continue-on-error: true
-
-      - name: Download Linux artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: linux-artifacts
-          path: artifacts/linux
-        continue-on-error: true
-
-      - name: Download macOS artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: macos-artifacts
-          path: artifacts/mac
-        continue-on-error: true
-
-      - name: List downloaded artifacts
-        run: |
-          echo "Listing artifacts directory:"
-          mkdir -p artifacts
-          ls -la artifacts/ || true
-          echo "Windows artifacts:"
-          ls -la artifacts/windows || echo "No Windows artifacts"
-          echo "Linux artifacts:"
-          ls -la artifacts/linux || echo "No Linux artifacts"
-          echo "macOS artifacts:"
-          ls -la artifacts/mac || echo "No macOS artifacts"
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          draft: true
-          tag_name: ${{ needs.create-tag.outputs.tag }}
-          name: Release ${{ needs.create-tag.outputs.tag }}
-          generate_release_notes: true
-          prerelease: false
-          files: |
-            artifacts/windows/*
-            artifacts/linux/*
-            artifacts/mac/*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   publish-linux:
     strategy:
       matrix:
@@ -232,70 +38,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: 'pnpm'
-      - name: Cache Electron
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/electron
-            ~/.cache/electron-builder
-          key: ${{ runner.os }}-electron-cache-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-electron-cache-
-      - name: Create pnpm store directory
-        run: mkdir -p $(pnpm store path)
-      - name: Clean pnpm store
-        run: pnpm store prune || true
-      - name: Install dependencies
-        run: pnpm i --no-frozen-lockfile --fetch-timeout 600000
-
-      # Add build step before packaging
-      - name: Build app
-        run: pnpm build
-        env:
-          NODE_OPTIONS: "--max_old_space_size=4096"
-          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
-
-      # Then install native modules separately in the desktop app directory
-      - name: Install native modules
-        run: |
-          cd apps/desktop
-          pnpm remove bufferutil utf-8-validate register-scheme
-          pnpm add bufferutil@4.0.9 utf-8-validate@6.0.5
-          pnpm add register-scheme@0.0.2 --save-optional
-        env:
-          npm_config_build_from_source: false
-          NODE_VERSION: ${{ matrix.node }}
-
-      - name: Build and package Linux app
-        run: |
-          cd apps/desktop
-          pnpm dist:linux --publish never
+      - run: pnpm i
+      - run: pnpm dist:linux
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_OPTIONS: "--max_old_space_size=4096"
-          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
-
-      - name: List Linux build directories
-        run: |
-          cd apps/desktop
-          echo "Release directory contents:"
-          ls -la release || echo "No release directory"
-          echo "Out directory contents:"
-          ls -la out || echo "No out directory"
-          echo "Main directory contents:"
-          ls -la out/main || echo "No main directory"
-
-      - name: Upload Linux artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-artifacts
-          path: |
-            apps/desktop/release/*.AppImage
-            apps/desktop/release/*.deb
-            apps/desktop/release/*.rpm
-            apps/desktop/release/latest*.yml
-
   publish-mac:
     strategy:
       matrix:
@@ -311,85 +57,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: 'pnpm'
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Install Python dependencies
-        run: pip install setuptools
-      - name: Cache Electron
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/Library/Caches/electron
-            ~/Library/Caches/electron-builder
-          key: ${{ runner.os }}-electron-cache-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-electron-cache-
-      - name: Create pnpm store directory
-        run: mkdir -p $(pnpm store path)
-      - name: Clean pnpm store
-        run: pnpm store prune || true
-      - name: Install dependencies
-        run: pnpm i --no-frozen-lockfile --fetch-timeout 600000
-      - name: Build app
-        run: pnpm build
-        env:
-          NODE_OPTIONS: "--max_old_space_size=4096"
-          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
-
-      - name: Build and package macOS app
-        run: |
-          cd apps/desktop
-          pnpm dist:mac --publish never
+      - run: pnpm i
+      - run: pnpm dist:mac
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_OPTIONS: "--max_old_space_size=4096"
-          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
-
-      - name: List macOS build directories
-        run: |
-          cd apps/desktop
-          echo "Release directory contents:"
-          ls -la release || echo "No release directory"
-          echo "Dist directory contents:"
-          ls -la dist || echo "No dist directory"
-
-      - name: Upload macOS artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-artifacts
-          path: |
-            apps/desktop/release/*.dmg
-            apps/desktop/release/latest*.yml
-
-  publish-docs:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pages: write
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9.0.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'pnpm'
-      - name: Install dependencies
-        run: pnpm i --no-frozen-lockfile
-      - name: Install docs dependencies
-        run: cd apps/docs && pnpm i
-      - name: Build docs
-        run: cd apps/docs && pnpm build
-      - name: Create CNAME file in dist directory
-        run: echo "comicers.org" > apps/docs/src/.vitepress/dist/CNAME
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./apps/docs/src/.vitepress/dist
-          force_orphan: true # This creates a clean gh-pages branch without history
+          # APPLE_ID: ${{ secrets.APPLE_ID }}
+          # APPLE_ID_PASS: ${{ secrets.APPLE_ID_PASS }}
+          # CSC_LINK: ${{ secrets.CSC_LINK }}
+          # CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
