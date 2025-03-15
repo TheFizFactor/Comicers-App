@@ -10,7 +10,7 @@
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "lint": "biome lint src",
-    "dist:win": "cross-env ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES=1 npm_config_build_from_source=false npm_config_msvs_version=2022 pnpm electron-builder --publish always --win",
+    "dist:win": "cross-env ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES=1 npm_config_build_from_source=false npm_config_msvs_version=2022 pnpm electron-builder --publish onTagOrDraft --win",
     "dist:mac": "pnpm electron-builder --publish onTagOrDraft --mac",
     "dist:linux": "pnpm electron-builder --publish onTagOrDraft --linux"
   },
@@ -90,7 +90,9 @@
     "publish": {
       "provider": "github",
       "owner": "TheFizFactor",
-      "repo": "Comicers-App"
+      "repo": "Comicers-App",
+      "private": true,
+      "releaseType": "release"
     }
   },
   "repository": {
