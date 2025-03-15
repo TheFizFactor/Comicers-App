@@ -259,10 +259,10 @@ jobs:
         with:
           name: linux-artifacts
           path: |
-            apps/desktop/dist/*.AppImage
-            apps/desktop/dist/*.deb
-            apps/desktop/dist/*.rpm
-            apps/desktop/dist/latest*.yml
+            apps/desktop/release/*.AppImage
+            apps/desktop/release/*.deb
+            apps/desktop/release/*.rpm
+            apps/desktop/release/latest*.yml
 
   publish-mac:
     strategy:
@@ -318,8 +318,8 @@ jobs:
         with:
           name: macos-artifacts
           path: |
-            apps/desktop/dist/*.dmg
-            apps/desktop/dist/latest*.yml
+            apps/desktop/release/*.dmg
+            apps/desktop/release/latest*.yml
 
   publish-docs:
     runs-on: ubuntu-latest
