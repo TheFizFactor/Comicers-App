@@ -9,7 +9,7 @@ interface CompletedChapter {
 
 class ReadingStatsService {
   private persistentStore = {
-    write(key: string, data: any) {
+    write(key: string, data: unknown) {
       window.localStorage.setItem(key, JSON.stringify(data));
     },
     read(key: string) {

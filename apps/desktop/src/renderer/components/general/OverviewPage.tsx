@@ -44,6 +44,13 @@ interface ReadingListWithProgress extends ReadingList {
     totalSeries: number;
 }
 
+interface RecentlyRead {
+    id: string;
+    title: string;
+    chapter: string;
+    timestamp: number;
+}
+
 // Overview welcome messages
 const quotes = [
     "Track your reading progress",
@@ -64,7 +71,7 @@ export const OverviewPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const seriesList = useRecoilValue(seriesListState);
     const readingLists = useRecoilValue(readingListsState);
-    const [recentlyRead, setRecentlyRead] = useState<any[]>([]);
+    const [recentlyRead, setRecentlyRead] = useState<RecentlyRead[]>([]);
     const [stats, setStats] = useState(() => readingStatsService.getStats());
     const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
     const [isQuoteVisible, setIsQuoteVisible] = useState(true);
@@ -91,12 +98,12 @@ export const OverviewPage: React.FC = () => {
                 releaseDate: new Date().toLocaleDateString(),
                 notes: notes
             }]);
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Failed to fetch release notes:', error);
             setReleases([{
                 version: 'Latest',
                 releaseDate: new Date().toLocaleDateString(),
-                notes: error.response?.status === 403 
+                notes: error instanceof Error && error.message === 'GitHub API rate limit exceeded. Please try again in a few minutes.'
                     ? 'GitHub API rate limit exceeded. Please try again in a few minutes.'
                     : 'Failed to load release notes. Please check your connection.'
             }]);
@@ -116,8 +123,10 @@ export const OverviewPage: React.FC = () => {
         const recent = seriesList
             .slice(0, 5)
             .map(series => ({
-                ...series,
-                lastRead: new Date().toLocaleDateString()
+                id: series.id || 'unknown',
+                title: series.title,
+                chapter: 'Chapter 1', // Default chapter
+                timestamp: Date.now()
             }));
         setRecentlyRead(recent);
 
@@ -316,7 +325,7 @@ export const OverviewPage: React.FC = () => {
                                                 {series.title}
                                             </p>
                                             <p className="text-sm text-muted-foreground">
-                                                Last read: {series.lastRead}
+                                                Last read: {new Date(series.timestamp).toLocaleDateString()}
                                             </p>
                                         </div>
                                         <BookOpen className="w-4 h-4 text-muted-foreground" />

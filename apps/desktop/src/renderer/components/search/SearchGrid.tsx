@@ -45,49 +45,52 @@ const SearchGrid: React.FC<Props> = (props: Props): JSX.Element => {
     setShowingAddModal(!showingAddModal);
   };
 
-  const renderSeriesGrid = () =>
-    searchResult.seriesList.map((series, i) => (
-      <motion.div
-        key={`${series.id}-${i}`}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: i * 0.05 }}
-        className="group relative cursor-pointer"
-        onClick={() => handleOpenAddModal(series)}
-      >
-        <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-muted/30">
-          <img
-            src={series.remoteCoverUrl}
-            alt={series.title}
-            className={cn(
-              'h-full w-full transition-all duration-300',
-              'hover:scale-105 hover:brightness-110',
-              libraryCropCovers ? 'object-cover' : 'object-contain',
+  const renderSeriesGrid = (): JSX.Element[] =>
+    searchResult.seriesList.map((series, i) => {
+      const seriesWithProvider = series as Series & { provider?: string };
+      return (
+        <motion.div
+          key={`${series.id}-${i}`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: i * 0.05 }}
+          className="group relative cursor-pointer"
+          onClick={() => handleOpenAddModal(series)}
+        >
+          <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-muted/30">
+            <img
+              src={series.remoteCoverUrl}
+              alt={series.title}
+              className={cn(
+                'h-full w-full transition-all duration-300',
+                'hover:scale-105 hover:brightness-110',
+                libraryCropCovers ? 'object-cover' : 'object-contain',
+              )}
+              loading="lazy"
+            />
+            {seriesWithProvider.provider && (
+              <Badge 
+                variant="secondary" 
+                className="absolute top-2 right-2 bg-black/60 text-white border-none"
+              >
+                {seriesWithProvider.provider}
+              </Badge>
             )}
-            loading="lazy"
-          />
-          {(series as any).provider && (
-            <Badge 
-              variant="secondary" 
-              className="absolute top-2 right-2 bg-black/60 text-white border-none"
-            >
-              {(series as any).provider}
-            </Badge>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        </div>
-        <div className="mt-3 space-y-1">
-          <h3 className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">
-            {series.title}
-          </h3>
-          {series.description && (
-            <p className="text-xs text-muted-foreground line-clamp-2">
-              {series.description}
-            </p>
-          )}
-        </div>
-      </motion.div>
-    ));
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          </div>
+          <div className="mt-3 space-y-1">
+            <h3 className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">
+              {series.title}
+            </h3>
+            {series.description && (
+              <p className="text-xs text-muted-foreground line-clamp-2">
+                {series.description}
+              </p>
+            )}
+          </div>
+        </motion.div>
+      );
+    });
 
   const renderLoadingSkeleton = () => {
     const skeletonCount = libraryColumns * 2;

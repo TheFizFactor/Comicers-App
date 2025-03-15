@@ -276,14 +276,6 @@ const Search: React.FC = () => {
     }
   }, [enabledProviders, extensionList]);
 
-  const toggleProvider = (providerId: string) => {
-    setEnabledProviders(current => 
-      current.includes(providerId)
-        ? current.filter(id => id !== providerId)
-        : [...current, providerId]
-    );
-  };
-
   if (extensionList.length === 0) return <></>;
 
   return (

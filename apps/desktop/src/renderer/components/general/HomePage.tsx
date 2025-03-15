@@ -4,7 +4,7 @@ const { ipcRenderer } = require('electron');
 import ipcChannels from '@/common/constants/ipcChannels.json';
 import { useRecoilValue, useRecoilState } from 'recoil';
 import { seriesListState, importQueueState } from '@/renderer/state/libraryStates';
-import { Series } from '@tiyo/common';
+import { Series, ExtensionMetadata } from '@tiyo/common';
 import { 
     BookOpen, 
     TrendingUp,
@@ -183,7 +183,7 @@ export const HomePage: React.FC = () => {
         // Get list of extensions
         ipcRenderer
             .invoke(ipcChannels.EXTENSION_MANAGER.GET_ALL)
-            .then((list: any[]) => {
+            .then((list: ExtensionMetadata[]) => {
                 const filteredList = list.filter(ext => ext.id !== 'filesystem');
 
                 // Initialize enabled providers if empty

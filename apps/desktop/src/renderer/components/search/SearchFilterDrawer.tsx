@@ -55,13 +55,13 @@ const SearchFilterDrawer: React.FC<Props> = (props: Props) => {
   const [filterValuesMap, setFilterValuesMap] = useRecoilState(filterValuesMapState);
   const [wasChanged, setWasChanged] = useState(false);
 
-  const handleChange = (id: string, value: any) => {
+  const handleChange = (id: string, value: string | number | boolean | MultiToggleValues | FilterSortValue) => {
     setFilterValuesMap({
       ...filterValuesMap,
       [searchExtension]: {
         ...filterValuesMap[searchExtension],
-        [id]: value,
-      },
+        [id]: value
+      }
     });
     setWasChanged(true);
   };
@@ -115,7 +115,7 @@ const SearchFilterDrawer: React.FC<Props> = (props: Props) => {
               variant="ghost"
               size="sm"
               className="h-6 px-2"
-              onClick={() => handleChange(option.id, option.defaultValue)}
+              onClick={() => handleChange(option.id, option.defaultValue as string | number | boolean | MultiToggleValues | FilterSortValue)}
             >
               <X className="h-3 w-3" />
               <span className="ml-1 text-xs">Reset</span>
