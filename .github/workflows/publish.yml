@@ -156,12 +156,9 @@ jobs:
           name: windows-artifacts
           path: |
             apps/desktop/release/*.exe
-            apps/desktop/release/win-unpacked/*.exe
-            apps/desktop/release/*.yml
-            apps/desktop/dist/*.exe
-            apps/desktop/dist/win-unpacked/*.exe
-            apps/desktop/dist/*.yml
-            apps/desktop/build/*.exe
+            apps/desktop/release/latest*.yml
+            apps/desktop/release/*.zip
+            apps/desktop/release/*.blockmap
 
   create-release:
     needs: [create-tag, publish-win, publish-linux, publish-mac]
