@@ -48,6 +48,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@comicers/ui/components/Select';
+import { SettingsConfig } from './components/settings/SettingsConfig';
 
 loadStoredExtensionSettings();
 loadStoredTrackerTokens();
@@ -66,6 +67,12 @@ const SCHEDULE_OPTIONS = [
   { value: '24h', label: 'Tomorrow', ms: 86400000 },
 ];
 
+interface Settings {
+  theme: 'light' | 'dark';
+  autoUpdate: boolean;
+  telemetry: boolean;
+}
+
 export default function App() {
   const [loading, setLoading] = useState(true);
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | undefined>(undefined);
@@ -75,6 +82,7 @@ export default function App() {
   const [releaseNotes, setReleaseNotes] = useState<string>('Loading release notes...');
   const [isDownloading, setIsDownloading] = useState(false);
   const [showDisplayIssueNotice, setShowDisplayIssueNotice] = useState(false);
+  const [showFirstLaunch, setShowFirstLaunch] = useState(false);
   const setSeriesList = useSetRecoilState(seriesListState);
   const setCategoryList = useSetRecoilState(categoryListState);
   const setRunning = useSetRecoilState(runningState);
@@ -152,6 +160,31 @@ export default function App() {
     return () => window.removeEventListener('hashchange', handleRouteChange);
   }, []);
 
+  useEffect(() => {
+    // Check if this is the first launch
+    const isFirstLaunch = !localStorage.getItem('hasCompletedSetup');
+    setShowFirstLaunch(isFirstLaunch);
+
+    // Apply saved theme
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark';
+    if (savedTheme) {
+      document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+    }
+  }, []);
+
+  const handleFirstLaunchComplete = (settings: Settings) => {
+    // Save settings
+    localStorage.setItem('theme', settings.theme);
+    localStorage.setItem('autoUpdate', String(settings.autoUpdate));
+    localStorage.setItem('telemetry', String(settings.telemetry));
+    localStorage.setItem('hasCompletedSetup', 'true');
+    
+    // Apply theme
+    document.documentElement.classList.toggle('dark', settings.theme === 'dark');
+    
+    setShowFirstLaunch(false);
+  };
+
   const handleUpdateDownload = () => {
     setIsDownloading(true);
     ipcRenderer.invoke(ipcChannels.APP.PERFORM_UPDATE);
@@ -169,6 +202,11 @@ export default function App() {
 
   return (
     <>
+      <SettingsConfig
+        isOpen={showFirstLaunch}
+        onComplete={handleFirstLaunchComplete}
+        isPreLaunch={true}
+      />
       {showDisplayIssueNotice && (
         <div className="fixed top-0 left-0 right-0 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-100 px-4 py-2 text-center z-[9999]">
           If you notice any display issues, please press F5 to reload the page

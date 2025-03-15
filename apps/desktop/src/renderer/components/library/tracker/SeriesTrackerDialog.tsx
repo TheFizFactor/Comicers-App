@@ -137,8 +137,8 @@ export const SeriesTrackerDialog: React.FC<Props> = (props: Props) => {
     if (loading) {
       return (
         <div className="flex flex-col gap-2">
-          {[0, 1, 2].map(() => (
-            <Skeleton className="w-full h-24" />
+          {[0, 1, 2].map((i) => (
+            <Skeleton key={i} className="w-full h-24" />
           ))}
         </div>
       );

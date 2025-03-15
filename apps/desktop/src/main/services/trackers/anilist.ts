@@ -14,6 +14,7 @@ import { AniListTrackerMetadata } from '@/common/temp_tracker_metadata';
 
 // AniList client ID and authorize endpoint
 const clientId = '23253';
+const API_URL = 'https://graphql.anilist.co/';
 
 // For AniList, we need to use their implicit flow as they don't support authorization_code
 // flow for custom URL schemes. Users will need to copy the token manually.
@@ -34,35 +35,81 @@ const SCORE_FORMAT_MAP: { [key: string]: TrackScoreFormat } = {
   POINT_3: TrackScoreFormat.POINT_3,
 };
 
+interface AniListGraphQLResponse<T> {
+  data: T;
+  errors?: Array<{ message: string }>;
+}
+
+interface AniListUserData {
+  Viewer: {
+    id: string;
+    name: string;
+    mediaListOptions: {
+      scoreFormat: string;
+    };
+  };
+}
+
 export class AniListTrackerClient extends TrackerClientAbstract {
   userId: string;
+  userScoreFormat?: TrackScoreFormat;
 
-  userScoreFormat: TrackScoreFormat | undefined;
-
-  constructor(accessToken = '') {
+  constructor(accessToken: string = '') {
     super(accessToken);
     this.userId = '';
+  }
+
+  private async makeGraphQLRequest<T>(query: string, variables?: Record<string, unknown>): Promise<AniListGraphQLResponse<T> | null> {
+    if (!this.accessToken) {
+      console.warn('No access token available for AniList request');
+      return null;
+    }
+
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          query,
+          variables,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`AniList API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      if ('errors' in data) {
+        const errorMessages = data.errors.map((error: { message: string }) => error.message).join('; ');
+        throw new Error(`AniList GraphQL error: ${errorMessages}`);
+      }
+
+      return data as AniListGraphQLResponse<T>;
+    } catch (error) {
+      console.error('AniList request failed:', error);
+      return null;
+    }
   }
 
   getMetadata: () => TrackerMetadata = () => {
     return AniListTrackerMetadata;
   };
 
-  // For AniList, we need to use their implicit grant flow since they don't support custom protocol URIs
   getAuthUrl: GetAuthUrlFunc = () => {
-    // AniList only supports implicit grant flow with token in fragment
     return `https://anilist.co/api/v2/oauth/authorize?client_id=${clientId}&response_type=token`;
   };
 
-  // For AniList, the code is actually the access token already (from implicit flow)
   getToken: GetTokenFunc = (code: string) => {
-    // In AniList's case, the code is the access token directly from the implicit flow
     return new Promise((resolve) => resolve(code));
   };
 
-  getUsername: GetUsernameFunc = () => {
-    if (this.accessToken === '') return new Promise((resolve) => resolve(null));
-
+  getUsername: GetUsernameFunc = async () => {
     const query = `
       query User {
         Viewer {
@@ -72,39 +119,21 @@ export class AniListTrackerClient extends TrackerClientAbstract {
             scoreFormat
           }
         }
-      }`.trim();
+      }
+    `;
 
-    const url = 'https://graphql.anilist.co';
-    const options = {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.accessToken}`,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify({ query }),
-    };
+    const response = await this.makeGraphQLRequest<AniListUserData>(query);
+    if (!response) return null;
 
-    return (
-      fetch(url, options)
-        .then((response: Response) => response.json())
-        // biome-ignore lint/suspicious/noExplicitAny: TODO external schema
-        .then((data: any) => {
-          if ('errors' in data) {
-            console.error(
-              `Error getting username from tracker ${AniListTrackerMetadata.id}: ${data.errors
-                // biome-ignore lint/suspicious/noExplicitAny: TODO external schema
-                .map((error: any) => error.message)
-                .join('; ')}`,
-            );
-            return null;
-          }
-          this.userId = data.data.Viewer.id;
-          this.userScoreFormat = SCORE_FORMAT_MAP[data.data.Viewer.mediaListOptions.scoreFormat];
-          return data.data.Viewer.name;
-        })
-        .catch((e: Error) => console.error(e))
-    );
+    try {
+      const { data } = response;
+      this.userId = data.Viewer.id;
+      this.userScoreFormat = SCORE_FORMAT_MAP[data.Viewer.mediaListOptions.scoreFormat];
+      return data.Viewer.name;
+    } catch (error) {
+      console.error('Failed to parse AniList user data:', error);
+      return null;
+    }
   };
 
   search: SearchFunc = (text: string) => {

@@ -20,6 +20,8 @@
     "files": [
       "out/**/*"
     ],
+    "asar": true,
+    "asarUnpack": ["**/*.node"],
     "mac": {
       "target": [
         "dmg"
@@ -68,11 +70,25 @@
         }
       ],
       "signingHashAlgorithms": null,
-      "sign": null
+      "sign": null,
+      "artifactName": "Comicers-${version}-win.${ext}"
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Comicers",
+      "uninstallDisplayName": "Comicers",
+      "artifactName": "Comicers-Setup-${version}.${ext}",
+      "include": "installer.nsh",
+      "installerIcon": "assets/icons/win/icon.ico",
+      "uninstallerIcon": "assets/icons/win/icon.ico",
+      "installerHeaderIcon": "assets/icons/win/icon.ico",
+      "license": "LICENSE.txt",
+      "allowElevation": true,
+      "runAfterFinish": true,
+      "differentialPackage": true
     },
     "linux": {
       "target": [

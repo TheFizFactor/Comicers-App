@@ -10,7 +10,7 @@ import { reloadSeriesList } from '@/renderer/features/library/utils';
 import { chapterLanguagesState } from '@/renderer/state/settingStates';
 import { Button } from '@comicers/ui/components/Button';
 import { SeriesDetailsBannerBackground } from './SeriesDetailsBannerBackground';
-import { Loader2, MenuIcon } from 'lucide-react';
+import { Download, Edit, Loader2, MenuIcon, RefreshCw, Target } from 'lucide-react';
 import { FS_METADATA } from '@/common/temp_fs_metadata';
 import {
   DropdownMenu,
@@ -53,19 +53,22 @@ const SeriesDetailsBanner: React.FC<SeriesDetailsBannerProps> = (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
-                      className="!bg-neutral-50 !text-neutral-950 hover:!bg-neutral-200"
+                      variant="secondary"
                       size="sm"
+                      className="bg-white/90 hover:bg-white/100 text-neutral-900 border-none shadow-md"
                     >
-                      <MenuIcon className="w-4 h-4" />
+                      <MenuIcon className="w-4 h-4 mr-1" />
                       Options
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent side="bottom">
+                  <DropdownMenuContent side="bottom" className="w-48">
                     <DropdownMenuGroup>
                       <DropdownMenuItem onSelect={() => props.showDownloadModal()}>
+                        <Download className="w-4 h-4 mr-2" />
                         Download
                       </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => props.showRemoveModal()}>
+                      <DropdownMenuItem onSelect={() => props.showRemoveModal()} className="text-red-600">
+                        <Target className="w-4 h-4 mr-2" />
                         Remove series
                       </DropdownMenuItem>
                     </DropdownMenuGroup>
@@ -76,25 +79,37 @@ const SeriesDetailsBanner: React.FC<SeriesDetailsBannerProps> = (
             <div className="flex m-2 space-x-2">
               {props.series.extensionId === FS_METADATA.id && (
                 <Button
-                  className="!bg-neutral-50 !text-neutral-950 hover:!bg-neutral-200"
+                  variant="secondary"
+                  size="sm"
+                  className="bg-white/90 hover:bg-white/100 text-neutral-900 border-none shadow-md"
                   onClick={() => props.showEditModal()}
                 >
+                  <Edit className="w-4 h-4 mr-1" />
                   Edit
                 </Button>
               )}
               <Button
-                className="!bg-neutral-50 !text-neutral-950 hover:!bg-neutral-200"
+                variant="secondary"
+                size="sm"
+                className="bg-white/90 hover:bg-white/100 text-neutral-900 border-none shadow-md"
                 onClick={() => props.showTrackerModal()}
               >
+                <Target className="w-4 h-4 mr-1" />
                 Trackers
               </Button>
               <Button
+                variant="secondary"
+                size="sm"
                 disabled={reloadingSeriesList}
-                className="!bg-neutral-50 !text-neutral-950 hover:!bg-neutral-200 disabled:!bg-neutral-500 disabled:!opacity-100"
+                className="bg-white/90 hover:bg-white/100 text-neutral-900 border-none shadow-md disabled:bg-neutral-300 disabled:text-neutral-500"
                 onClick={() => handleRefresh()}
               >
-                {reloadingSeriesList && <Loader2 className="animate-spin" />}
-                {reloadingSeriesList ? 'Refreshing...' : 'Refresh'}{' '}
+                {reloadingSeriesList ? (
+                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-4 h-4 mr-1" />
+                )}
+                {reloadingSeriesList ? 'Refreshing...' : 'Refresh'}
               </Button>
             </div>
           </div>
