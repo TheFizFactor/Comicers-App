@@ -249,10 +249,21 @@ jobs:
       - name: Install dependencies
         run: pnpm i --no-frozen-lockfile --fetch-timeout 600000
       - name: Build and package Linux app
-        run: pnpm dist:linux
+        run: |
+          cd apps/desktop
+          pnpm dist:linux --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_OPTIONS: "--max_old_space_size=4096"
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+
+      - name: List Linux build directories
+        run: |
+          cd apps/desktop
+          echo "Release directory contents:"
+          ls -la release || echo "No release directory"
+          echo "Dist directory contents:"
+          ls -la dist || echo "No dist directory"
 
       - name: Upload Linux artifacts
         uses: actions/upload-artifact@v4
@@ -308,10 +319,21 @@ jobs:
           ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
 
       - name: Build and package macOS app
-        run: cd apps/desktop && pnpm dist:mac
+        run: |
+          cd apps/desktop
+          pnpm dist:mac --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_OPTIONS: "--max_old_space_size=4096"
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+
+      - name: List macOS build directories
+        run: |
+          cd apps/desktop
+          echo "Release directory contents:"
+          ls -la release || echo "No release directory"
+          echo "Dist directory contents:"
+          ls -la dist || echo "No dist directory"
 
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
