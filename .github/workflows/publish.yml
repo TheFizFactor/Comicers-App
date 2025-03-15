@@ -1,8 +1,12 @@
+# Publish workflow - Creates draft releases for all builds
 name: Publish
 permissions:
   contents: write
-  releases: write
+  issues: write
   pull-requests: write
+  packages: write
+  pages: write
+  id-token: write
 on:
   push:
     branches:
@@ -99,16 +103,37 @@ jobs:
           npm_config_msvs_version: 2022
 
   create-release:
-    needs: [publish-win]
+    needs: [publish-win, publish-linux, publish-mac]
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Get or create tag
+        id: tag
+        run: |
+          if [[ ! ${{ github.ref }} =~ ^refs/tags/ ]]; then
+            # Get latest tag
+            latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+            # Increment patch version
+            new_tag=$(echo $latest_tag | awk -F. -v OFS=. '{$NF++;print}')
+            echo "Creating new tag: $new_tag"
+            git tag $new_tag
+            git push origin $new_tag
+            echo "tag=$new_tag" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           draft: true
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: Release ${{ steps.tag.outputs.tag }}
           generate_release_notes: true
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
