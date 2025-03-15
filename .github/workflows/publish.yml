@@ -7,6 +7,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - 'v*'
 jobs:
   publish-win:
     strategy:
@@ -95,7 +97,20 @@ jobs:
           npm_config_build_from_source: false
           NODE_VERSION: ${{ matrix.node }}
           npm_config_msvs_version: 2022
-          
+
+  create-release:
+    needs: [publish-win]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   publish-linux:
     strategy:
       matrix:

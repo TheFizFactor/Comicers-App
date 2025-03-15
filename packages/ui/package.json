@@ -7,6 +7,7 @@
     "lint": "biome lint src"
   },
   "exports": {
+    ".": "./src/index.ts",
     "./components/*": "./src/components/*.tsx",
     "./hooks/*": "./src/hooks/*.tsx",
     "./util": "./src/util.ts"
