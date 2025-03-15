@@ -14,7 +14,32 @@ on:
     tags:
       - 'v*'
 jobs:
+  create-tag:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Get package version
+        id: package_version
+        run: |
+          VERSION=$(node -p "require('./apps/desktop/package.json').version")
+          echo "version=v$VERSION" >> $GITHUB_OUTPUT
+          
+      - name: Create and push tag
+        id: tag
+        run: |
+          TAG=${{ steps.package_version.outputs.version }}
+          echo "Creating tag: $TAG"
+          git tag $TAG || true
+          git push origin $TAG || true
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
   publish-win:
+    needs: [create-tag]
     strategy:
       matrix:
         node: ['22']
@@ -101,6 +126,7 @@ jobs:
           npm_config_build_from_source: false
           NODE_VERSION: ${{ matrix.node }}
           npm_config_msvs_version: 2022
+          APP_VERSION: ${{ needs.create-tag.outputs.tag }}
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
@@ -111,7 +137,7 @@ jobs:
             apps/desktop/dist/latest*.yml
 
   create-release:
-    needs: [publish-win, publish-linux, publish-mac]
+    needs: [create-tag, publish-win, publish-linux, publish-mac]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -124,24 +150,27 @@ jobs:
         with:
           name: windows-artifacts
           path: artifacts/windows
+        continue-on-error: true
 
       - name: Download Linux artifacts
         uses: actions/download-artifact@v4
         with:
           name: linux-artifacts
           path: artifacts/linux
+        continue-on-error: true
 
       - name: Download macOS artifacts
         uses: actions/download-artifact@v4
         with:
           name: macos-artifacts
           path: artifacts/mac
+        continue-on-error: true
 
       - name: List downloaded artifacts
         run: |
           echo "Listing artifacts directory:"
           mkdir -p artifacts
-          ls -la artifacts/
+          ls -la artifacts/ || true
           echo "Windows artifacts:"
           ls -la artifacts/windows || echo "No Windows artifacts"
           echo "Linux artifacts:"
@@ -149,26 +178,12 @@ jobs:
           echo "macOS artifacts:"
           ls -la artifacts/mac || echo "No macOS artifacts"
 
-      - name: Get or create tag
-        id: tag
-        run: |
-          if [[ ! ${{ github.ref }} =~ ^refs/tags/ ]]; then
-            latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-            new_tag=$(echo $latest_tag | awk -F. -v OFS=. '{$NF++;print}')
-            echo "Creating new tag: $new_tag"
-            git tag $new_tag
-            git push origin $new_tag
-            echo "tag=$new_tag" >> $GITHUB_OUTPUT
-          else
-            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-          fi
-
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           draft: true
-          tag_name: ${{ steps.tag.outputs.tag }}
-          name: Release ${{ steps.tag.outputs.tag }}
+          tag_name: ${{ needs.create-tag.outputs.tag }}
+          name: Release ${{ needs.create-tag.outputs.tag }}
           generate_release_notes: true
           prerelease: false
           files: |
