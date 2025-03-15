@@ -214,6 +214,6 @@
     "runtime": "electron",
     "target": "32.3.3",
     "arch": "x64",
-    "msvs_version": "2019"
+    "msvs_version": "2022"
   }
 }

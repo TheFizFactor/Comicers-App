@@ -63,6 +63,7 @@ jobs:
         env:
           npm_config_build_from_source: false
           NODE_VERSION: ${{ matrix.node }}
+          npm_config_msvs_version: 2022
           
       # Build the app
       - name: Build app
@@ -70,6 +71,7 @@ jobs:
         env:
           NODE_OPTIONS: "--max_old_space_size=4096"
           ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          npm_config_msvs_version: 2022
       
       # Package with modified environment variables
       - name: Package Windows app
@@ -81,6 +83,7 @@ jobs:
           ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
           npm_config_build_from_source: false
           NODE_VERSION: ${{ matrix.node }}
+          npm_config_msvs_version: 2022
           
   publish-linux:
     strategy:
