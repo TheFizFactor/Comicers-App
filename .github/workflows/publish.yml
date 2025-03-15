@@ -118,7 +118,8 @@ jobs:
       # Package with modified environment variables
       - name: Package Windows app
         run: |
-          cd apps/desktop && pnpm dist:win
+          cd apps/desktop
+          pnpm dist:win --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_OPTIONS: "--max_old_space_size=4096"
@@ -128,13 +129,23 @@ jobs:
           npm_config_msvs_version: 2022
           APP_VERSION: ${{ needs.create-tag.outputs.tag }}
 
+      - name: List dist directory
+        run: |
+          echo "Listing dist directory:"
+          cd apps/desktop
+          dir dist
+          dir dist\*.exe /s /b
+          
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
           name: windows-artifacts
           path: |
+            apps/desktop/dist/win-unpacked/*.exe
             apps/desktop/dist/*.exe
             apps/desktop/dist/latest*.yml
+            apps/desktop/release/*.exe
+            apps/desktop/release/win-unpacked/*.exe
 
   create-release:
     needs: [create-tag, publish-win, publish-linux, publish-mac]
