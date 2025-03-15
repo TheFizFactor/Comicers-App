@@ -2,7 +2,7 @@
   "name": "@comicers/desktop",
   "productName": "Comicers",
   "description": "Manga reader and library manager for the desktop",
-  "version": "2.17.2",
+  "version": "2.17.3",
   "private": true,
   "main": "./out/main/index.js",
   "scripts": {
@@ -16,7 +16,7 @@
   },
   "build": {
     "productName": "Comicers",
-    "appId": "com.faltro.Comicers",
+    "appId": "com.comicers.org",
     "files": [
       "out/**/*"
     ],
@@ -102,7 +102,7 @@
   "author": {
     "name": "Arnis",
     "email": "fiz@comicers.com",
-    "url": "https://faltro.com"
+    "url": "https://comicers.org"
   },
   "license": "MIT",
   "bugs": {

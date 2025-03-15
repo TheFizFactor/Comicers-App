@@ -54,7 +54,6 @@ import {
   DialogTrigger,
 } from '@comicers/ui/components/Dialog';
 import { Button } from '@comicers/ui/components/Button';
-import { Badge } from '@comicers/ui/components/Badge';
 import packageJson from '../../../../package.json';
 import { SettingsDialogContent } from '../settings/SettingsDialogContent';
 import { categoryListState } from '@/renderer/state/libraryStates';
@@ -101,11 +100,10 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
   return (
     <Sidebar className="bg-card border-r-0" {...props}>
       <SidebarHeader className="pt-8 px-6">
-        <div className="flex items-center gap-3 px-2">
-          <div className="h-8 w-8 flex items-center justify-center overflow-hidden">
-            <img src="https://media-hosting.imagekit.io//3acb2ec681f44f4b/Untitled%20(5).png?Expires=1836599631&Key-Pair-Id=K2ZIVPTIP2VGHC&Signature=rh3fJn6M-yXX958UXoOeKvljc6zlHQMP-kJNo4cowkF~KcbRqP5Zyd5DV2gHMAIErZ0kWeplMnBfWxQxSVF0M3TOphEQgtlVmeZltk4W1HGHnoTfuxp7yfq5M9YMGtS-35QX3YzWukX3ndzsetfJVqFydvIfN97nW0aYdkSCWUdzed5PFgBjMKU~Md4FWgWfFUTF3chsWXwZcWnzJjvyR9o3nYBd2A~wUZVI3Y73wORv-bCFfSfaBUlrlr9Tis-MatiLiQZJ6FrX8llNl2TckdPZMd9SOlrS7TwFjOCzRS~dwPYHbrMG31oRQjxn9ZbvySo7XMjaf77IbtJ-LdXyhg__" alt="Comicers" className="h-full w-full object-contain" />
+        <div className="flex items-center justify-center">
+          <div className="flex items-center justify-center overflow-hidden">
+            <img src="https://i.ibb.co/nNTCkn0C/Untitled-6.png" alt="Comicers" className="h-16 w-16 object-contain" />
           </div>
-          <span className="font-semibold text-lg tracking-tight">Comicers</span>
         </div>
       </SidebarHeader>
 
