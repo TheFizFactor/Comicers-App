@@ -119,6 +119,13 @@ jobs:
       - name: Package Windows app
         run: |
           cd apps/desktop
+          echo "Current directory:"
+          pwd
+          echo "Directory contents:"
+          dir
+          echo "Package.json contents:"
+          cat package.json
+          echo "Building app..."
           pnpm dist:win --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -128,24 +135,33 @@ jobs:
           NODE_VERSION: ${{ matrix.node }}
           npm_config_msvs_version: 2022
           APP_VERSION: ${{ needs.create-tag.outputs.tag }}
+          DEBUG: electron-builder
 
-      - name: List dist directory
+      - name: List build directories
         run: |
-          echo "Listing dist directory:"
+          echo "Listing possible build directories:"
           cd apps/desktop
-          dir dist
-          dir dist\*.exe /s /b
+          echo "Current directory:"
+          dir
+          echo "Release directory (if exists):"
+          dir release || echo "No release directory"
+          echo "Dist directory (if exists):"
+          dir dist || echo "No dist directory"
+          echo "Build directory (if exists):"
+          dir build || echo "No build directory"
           
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
           name: windows-artifacts
           path: |
-            apps/desktop/dist/win-unpacked/*.exe
-            apps/desktop/dist/*.exe
-            apps/desktop/dist/latest*.yml
             apps/desktop/release/*.exe
             apps/desktop/release/win-unpacked/*.exe
+            apps/desktop/release/*.yml
+            apps/desktop/dist/*.exe
+            apps/desktop/dist/win-unpacked/*.exe
+            apps/desktop/dist/*.yml
+            apps/desktop/build/*.exe
 
   create-release:
     needs: [create-tag, publish-win, publish-linux, publish-mac]
