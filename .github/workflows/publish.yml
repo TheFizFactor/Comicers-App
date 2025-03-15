@@ -106,7 +106,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-artifacts
-          path: apps/desktop/dist/*.exe
+          path: |
+            apps/desktop/dist/*.exe
+            apps/desktop/dist/latest*.yml
 
   create-release:
     needs: [publish-win, publish-linux, publish-mac]
@@ -120,7 +122,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts
-
+          
+      - name: List downloaded artifacts
+        run: |
+          echo "Listing artifacts directory:"
+          ls -R artifacts/
+          
       - name: Get or create tag
         id: tag
         run: |
@@ -143,10 +150,7 @@ jobs:
           name: Release ${{ steps.tag.outputs.tag }}
           generate_release_notes: true
           prerelease: false
-          files: |
-            artifacts/windows-artifacts/*
-            artifacts/linux-artifacts/*
-            artifacts/macos-artifacts/*
+          files: artifacts/**/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -195,6 +199,7 @@ jobs:
             apps/desktop/dist/*.AppImage
             apps/desktop/dist/*.deb
             apps/desktop/dist/*.rpm
+            apps/desktop/dist/latest*.yml
 
   publish-mac:
     strategy:
@@ -233,8 +238,14 @@ jobs:
         run: pnpm store prune || true
       - name: Install dependencies
         run: pnpm i --no-frozen-lockfile --fetch-timeout 600000
+      - name: Build app
+        run: pnpm build
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+
       - name: Build and package macOS app
-        run: pnpm dist:mac
+        run: cd apps/desktop && pnpm dist:mac
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_OPTIONS: "--max_old_space_size=4096"
@@ -243,7 +254,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: macos-artifacts
-          path: apps/desktop/dist/*.dmg
+          path: |
+            apps/desktop/dist/*.dmg
+            apps/desktop/dist/latest*.yml
 
   publish-docs:
     runs-on: ubuntu-latest
