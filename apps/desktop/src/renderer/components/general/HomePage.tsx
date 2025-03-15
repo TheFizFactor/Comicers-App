@@ -1,347 +1,367 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '@comicers/ui/components/Button';
-import { ScrollArea } from '@comicers/ui/components/ScrollArea';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@comicers/ui/components/Card';
-import { Dialog, DialogTrigger } from '@comicers/ui/components/Dialog';
-import { SettingsDialogContent } from '../settings/SettingsDialogContent';
-import { SettingsPage } from '../settings/SettingsDialogContent';
+import { useNavigate } from 'react-router-dom';
 const { ipcRenderer } = require('electron');
 import ipcChannels from '@/common/constants/ipcChannels.json';
-import { useRecoilValue } from 'recoil';
-import { seriesListState, readingListsState } from '@/renderer/state/libraryStates';
-import { SeriesStatus } from '@tiyo/common';
-import { ReadingList } from '@/common/models/types';
-import { readingStatsService } from '@/renderer/services/readingStats';
+import { useRecoilValue, useRecoilState } from 'recoil';
+import { seriesListState, importQueueState } from '@/renderer/state/libraryStates';
+import { Series } from '@tiyo/common';
 import { 
     BookOpen, 
-    Library, 
-    Download, 
-    BarChart,
-    BookMarked,
-    ListTodo,
-    Bookmark,
-    History,
-    Compass
+    TrendingUp,
+    Flame,
+    ThumbsUp
 } from 'lucide-react';
-import { Progress } from '@comicers/ui/components/Progress';
 
-interface ReleaseInfo {
-    version: string;
-    releaseDate: string;
-    notes: string;
+// Simple welcome messages
+const quotes = [
+    "Discover your next favorite series",
+    "Find something new to read",
+    "Explore endless stories",
+    "Your reading journey starts here",
+    "Browse through our collection",
+    "Dive into new adventures",
+    "Uncover hidden gems",
+    "Join the reading community",
+    "Start your collection today",
+    "Find your perfect match"
+];
+
+interface SeriesWithRating extends Series {
+    // rating removed as it's not real data
 }
 
-interface QuickStat {
-    label: string;
-    value: string | number;
-    icon: React.ReactNode;
-    description?: string;
-}
-
-interface ReadingListWithProgress extends ReadingList {
-    progress: number;
-    totalSeries: number;
-}
-
-export const HomePage: React.FC = () => {
-    const navigate = useNavigate();
-    const [releases, setReleases] = useState<ReleaseInfo[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [retryCount, setRetryCount] = useState(0);
-    const seriesList = useRecoilValue(seriesListState);
-    const readingLists = useRecoilValue(readingListsState);
-    const [recentlyRead, setRecentlyRead] = useState<any[]>([]);
-    const [stats, setStats] = useState(() => readingStatsService.getStats());
-
-    const fetchReleaseNotes = async () => {
-        setLoading(true);
-        try {
-            const notes = await ipcRenderer.invoke(ipcChannels.APP.GET_RELEASE_NOTES);
-            setReleases([{
-                version: 'Latest',
-                releaseDate: new Date().toLocaleDateString(),
-                notes: notes
-            }]);
-        } catch (error: any) {
-            console.error('Failed to fetch release notes:', error);
-            setReleases([{
-                version: 'Latest',
-                releaseDate: new Date().toLocaleDateString(),
-                notes: error.response?.status === 403 
-                    ? 'GitHub API rate limit exceeded. Please try again in a few minutes.'
-                    : 'Failed to load release notes. Please check your connection.'
-            }]);
-        } finally {
-            setLoading(false);
+const FeaturedCard: React.FC<{ 
+    series: SeriesWithRating;
+    onNavigate: (id: string, series: SeriesWithRating) => void;
+}> = ({ series, onNavigate }) => {
+    const handleClick = () => {
+        console.log('Featured Card Click - Series:', series);
+        if (series?.sourceId && series?.extensionId) {
+            const seriesPath = `${series.extensionId}/${series.sourceId}`;
+            console.log('Navigating to:', seriesPath);
+            onNavigate(seriesPath, series);
         }
     };
-
-    const handleRetry = () => {
-        setRetryCount(prev => prev + 1);
-        fetchReleaseNotes();
-    };
-
-    useEffect(() => {
-        fetchReleaseNotes();
-
-        // Get recently read series (placeholder - implement actual tracking)
-        const recent = seriesList
-            .slice(0, 5)
-            .map(series => ({
-                ...series,
-                lastRead: new Date().toLocaleDateString()
-            }));
-        setRecentlyRead(recent);
-
-        // Get actual reading stats
-        const currentStats = readingStatsService.getStats();
-        setStats(currentStats);
-    }, [seriesList]);
-
-    const quickStats: QuickStat[] = [
-        {
-            label: 'Total Series',
-            value: seriesList.length,
-            icon: <Library className="w-4 h-4" />,
-            description: 'Series in your library'
-        },
-        {
-            label: 'Reading Now',
-            value: recentlyRead.length,
-            icon: <BookOpen className="w-4 h-4" />,
-            description: 'Recently opened series'
-        },
-        {
-            label: 'Reading Streak',
-            value: `${stats.dailyStreak} days`,
-            icon: <History className="w-4 h-4" />,
-            description: 'Current reading streak'
-        },
-        {
-            label: 'Completed',
-            value: seriesList.filter(s => s.status === SeriesStatus.COMPLETED).length,
-            icon: <BookMarked className="w-4 h-4" />,
-            description: 'Completed series'
-        }
-    ];
-
-    // Calculate reading list progress
-    const readingListsWithProgress: ReadingListWithProgress[] = readingLists.map(list => {
-        const completedSeries = list.series.filter(s => s.status === SeriesStatus.COMPLETED).length;
-        return {
-            ...list,
-            progress: Math.round((completedSeries / list.series.length) * 100),
-            totalSeries: list.series.length
-        };
-    }).sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 5);
 
     return (
-        <div className="container mx-auto p-6 space-y-8">
-            {/* Welcome Banner */}
-            <div className="relative overflow-hidden rounded-lg bg-gradient-to-r from-[#9CEE69] to-[#7BC94D] shadow-lg">
-                <div className="relative z-10 p-6">
-                    <h1 className="text-4xl font-bold mb-4 text-black">Welcome to Comicers</h1>
-                    <p className="text-lg mb-6 text-black/80">
-                        Your ultimate comic reading and management companion. Start exploring your library or discover new comics today.
-                    </p>
-                    <div className="flex gap-4">
-                        <Button variant="secondary" onClick={() => navigate('/library')}>
-                            Browse Library
-                        </Button>
-                        <Button variant="secondary" onClick={() => navigate('/search')}>
-                            Discover Comics
-                        </Button>
-                    </div>
+        <div 
+            className="group relative cursor-pointer h-full min-h-[300px] rounded-xl overflow-hidden"
+            onClick={handleClick}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    handleClick();
+                }
+            }}
+        >
+            {series.remoteCoverUrl ? (
+                <img 
+                    src={series.remoteCoverUrl} 
+                    alt={series.title}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+            ) : (
+                <div className="absolute inset-0 bg-muted flex items-center justify-center">
+                    <BookOpen className="h-12 w-12 text-muted-foreground" />
                 </div>
-            </div>
-
-            {/* Quick Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {quickStats.map((stat, index) => (
-                    <Card key={index}>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">
-                                {stat.label}
-                            </CardTitle>
-                            {stat.icon}
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{stat.value}</div>
-                            <p className="text-xs text-muted-foreground">
-                                {stat.description}
-                            </p>
-                        </CardContent>
-                    </Card>
-                ))}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Quick Actions */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Quick Actions</CardTitle>
-                        <CardDescription>Common tasks and shortcuts</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid grid-cols-2 gap-2">
-                            <Button
-                                variant="outline"
-                                className="w-full justify-start"
-                                onClick={() => navigate('/search')}
-                            >
-                                <Compass className="w-4 h-4" />
-                                <span className="ml-2">Explorer</span>
-                            </Button>
-                            <Button
-                                variant="outline"
-                                className="w-full justify-start"
-                                onClick={() => navigate('/library')}
-                            >
-                                <ListTodo className="w-4 h-4" />
-                                <span className="ml-2">Create List</span>
-                            </Button>
-                            <Button
-                                variant="outline"
-                                className="w-full justify-start"
-                                onClick={() => navigate('/downloads')}
-                            >
-                                <Download className="w-4 h-4" />
-                                <span className="ml-2">Downloads</span>
-                            </Button>
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        className="w-full justify-start"
-                                    >
-                                        <BarChart className="w-4 h-4" />
-                                        <span className="ml-2">Reading Stats</span>
-                                    </Button>
-                                </DialogTrigger>
-                                <SettingsDialogContent defaultPage={SettingsPage.Stats} />
-                            </Dialog>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Reading Lists */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Reading Lists</CardTitle>
-                        <CardDescription>Your curated collections</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <ScrollArea className="h-[200px]">
-                            <div className="space-y-4">
-                                {readingListsWithProgress.length === 0 ? (
-                                    <div className="text-center text-muted-foreground">
-                                        <Bookmark className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                                        <p>No reading lists yet</p>
-                                        <Button 
-                                            variant="link" 
-                                            className="mt-2"
-                                            onClick={() => navigate('/library')}
-                                        >
-                                            Create your first list
-                                        </Button>
-                                    </div>
-                                ) : (
-                                    readingListsWithProgress.map((list, index) => (
-                                        <div
-                                            key={index}
-                                            className="space-y-2 cursor-pointer hover:bg-accent rounded-lg p-2"
-                                            onClick={() => navigate(`/library?list=${list.id}`)}
-                                        >
-                                            <div className="flex justify-between items-center">
-                                                <p className="text-sm font-medium">{list.name}</p>
-                                                <span className="text-xs text-muted-foreground">
-                                                    {list.totalSeries} series
-                                                </span>
-                                            </div>
-                                            <Progress value={list.progress} className="h-1" />
-                                            <p className="text-xs text-muted-foreground">
-                                                {list.progress}% completed
-                                            </p>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </ScrollArea>
-                    </CardContent>
-                </Card>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Recently Read */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Recently Read</CardTitle>
-                        <CardDescription>Continue where you left off</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <ScrollArea className="h-[200px]">
-                            <div className="space-y-4">
-                                {recentlyRead.map((series, index) => (
-                                    <div
-                                        key={index}
-                                        className="flex items-center space-x-4 cursor-pointer hover:bg-accent rounded-lg p-2"
-                                        onClick={() => navigate(`/series/${series.id}`)}
-                                    >
-                                        <div className="flex-1 space-y-1">
-                                            <p className="text-sm font-medium leading-none">
-                                                {series.title}
-                                            </p>
-                                            <p className="text-sm text-muted-foreground">
-                                                Last read: {series.lastRead}
-                                            </p>
-                                        </div>
-                                        <BookOpen className="w-4 h-4 text-muted-foreground" />
-                                    </div>
-                                ))}
-                            </div>
-                        </ScrollArea>
-                    </CardContent>
-                </Card>
-
-                {/* Release Notes */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Latest Updates</CardTitle>
-                        <CardDescription>What's new in Comicers</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {loading ? (
-                            <div className="text-center p-4">Loading release notes...</div>
-                        ) : (
-                            <ScrollArea className="h-[200px]">
-                                {releases.map((release, index) => (
-                                    <div key={index} className="mb-6 last:mb-0">
-                                        <h3 className="text-lg font-semibold mb-2">
-                                            Version {release.version} • {release.releaseDate}
-                                        </h3>
-                                        <div className="prose prose-sm max-w-none">
-                                            <div className="whitespace-pre-wrap text-sm text-muted-foreground">
-                                                {release.notes}
-                                                {release.notes.includes('rate limit exceeded') && (
-                                                    <Button
-                                                        variant="link"
-                                                        className="mt-2 p-0"
-                                                        onClick={handleRetry}
-                                                        disabled={loading}
-                                                    >
-                                                        Retry
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </ScrollArea>
-                        )}
-                    </CardContent>
-                </Card>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-60 group-hover:opacity-70 transition-opacity" />
+            <div className="absolute bottom-0 left-0 right-0 p-6">
+                <div className="flex items-center gap-2 mb-2">
+                    <Flame className="w-5 h-5 text-orange-500" />
+                    <span className="text-sm font-medium text-orange-400">Featured Series</span>
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-2 line-clamp-2">
+                    {series.title}
+                </h2>
             </div>
         </div>
     );
-} 
+};
+
+const SeriesCard: React.FC<{ 
+    series: SeriesWithRating;
+    onNavigate: (id: string, series: SeriesWithRating) => void;
+}> = ({ series, onNavigate }) => {
+    const handleClick = () => {
+        console.log('Series Card Click - Series:', series);
+        if (series?.sourceId && series?.extensionId) {
+            const seriesPath = `${series.extensionId}/${series.sourceId}`;
+            console.log('Navigating to:', seriesPath);
+            onNavigate(seriesPath, series);
+        }
+    };
+
+    return (
+        <div 
+            className="group relative flex flex-col cursor-pointer"
+            onClick={handleClick}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    handleClick();
+                }
+            }}
+        >
+            <div className="relative aspect-[2/3] overflow-hidden rounded-lg">
+                {series.remoteCoverUrl ? (
+                    <img 
+                        src={series.remoteCoverUrl} 
+                        alt={series.title}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                ) : (
+                    <div className="w-full h-full bg-muted flex items-center justify-center">
+                        <BookOpen className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-60 group-hover:opacity-70 transition-opacity" />
+                <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <h3 className="text-sm font-medium text-white line-clamp-2">
+                        {series.title}
+                    </h3>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const SeriesSection: React.FC<{
+    title: string;
+    description: string;
+    series: SeriesWithRating[];
+    onNavigate: (id: string, series: SeriesWithRating) => void;
+    icon?: React.ReactNode;
+}> = ({ title, description, series, onNavigate, icon }) => {
+    return (
+        <div className="w-full">
+            <div className="flex items-start gap-4 mb-6">
+                {icon && <div className="text-primary mt-1">{icon}</div>}
+                <div>
+                    <h2 className="text-2xl font-bold flex items-center mb-2">{title}</h2>
+                    <p className="text-base text-muted-foreground">{description}</p>
+                </div>
+            </div>
+            <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4">
+                {series.map((series, index) => (
+                    <div key={index} className="transition-transform duration-200 hover:scale-[1.02]">
+                        <SeriesCard series={series} onNavigate={onNavigate} />
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+export const HomePage: React.FC = () => {
+    const navigate = useNavigate();
+    const seriesList = useRecoilValue(seriesListState);
+    const [, setImportQueue] = useRecoilState(importQueueState);
+    const [popularSeries, setPopularSeries] = useState<SeriesWithRating[]>([]);
+    const [recommendedSeries, setRecommendedSeries] = useState<SeriesWithRating[]>([]);
+    const [trendingSeries, setTrendingSeries] = useState<SeriesWithRating[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
+    const [isQuoteVisible, setIsQuoteVisible] = useState(true);
+
+    // Cycle through quotes
+    useEffect(() => {
+        const quoteTimer = setInterval(() => {
+            setIsQuoteVisible(false);
+            setTimeout(() => {
+                setCurrentQuoteIndex(prev => (prev + 1) % quotes.length);
+                setIsQuoteVisible(true);
+            }, 200); // Wait for fade out before changing quote
+        }, 2000); // Change quote every 2 seconds
+
+        return () => clearInterval(quoteTimer);
+    }, []);
+
+    useEffect(() => {
+        // Get list of extensions
+        ipcRenderer
+            .invoke(ipcChannels.EXTENSION_MANAGER.GET_ALL)
+            .then((list: any[]) => {
+                const filteredList = list.filter(ext => ext.id !== 'filesystem');
+
+                // Initialize enabled providers if empty
+                const defaultProviders = filteredList.filter(ext => 
+                    ext.name.toLowerCase().includes('mangadex') ||
+                    ext.name.toLowerCase().includes('guya') ||
+                    ext.name.toLowerCase().includes('comick')
+                );
+                
+                return defaultProviders;
+            })
+            .then(async (providers) => {
+                setLoading(true);
+                try {
+                    if (providers.length === 0) {
+                        throw new Error('No enabled providers available');
+                    }
+
+                    // Get popular series from each extension
+                    const popularResults = await Promise.all(
+                        providers.map(ext => 
+                            ipcRenderer.invoke(
+                                ipcChannels.EXTENSION.DIRECTORY,
+                                ext.id,
+                                1,
+                                {}
+                            )
+                        )
+                    );
+
+                    // Combine and process results
+                    const allSeries = popularResults.flatMap((result: { seriesList: Series[] }) => 
+                        result.seriesList.map((series: Series) => ({
+                            ...series
+                        }))
+                    );
+
+                    // Split into different sections - showing more items per section
+                    const shuffled = allSeries.sort(() => Math.random() - 0.5);
+                    setPopularSeries(shuffled.slice(0, 20));
+                    setRecommendedSeries(shuffled.slice(20, 40));
+                    setTrendingSeries(shuffled.slice(40, 60));
+                } catch (error) {
+                    console.error('Error fetching series:', error);
+                    // Fallback to library series if extension fetching fails
+                    const mockPopular = seriesList
+                        .filter(series => series.id)
+                        .slice(0, 20)
+                        .map(series => ({
+                            ...series
+                        }));
+                    setPopularSeries(mockPopular);
+
+                    const mockRecommended = seriesList
+                        .filter(series => series.id)
+                        .slice(20, 40)
+                        .map(series => ({
+                            ...series
+                        }));
+                    setRecommendedSeries(mockRecommended);
+
+                    const mockTrending = seriesList
+                        .filter(series => series.id)
+                        .slice(40, 60)
+                        .map(series => ({
+                            ...series
+                        }));
+                    setTrendingSeries(mockTrending);
+                } finally {
+                    setLoading(false);
+                }
+            });
+    }, [seriesList]);
+
+    const handleSeriesClick = (path: string, series: SeriesWithRating) => {
+        console.log('Handling series click:', path);
+        if (!path) {
+            console.error('No series path provided');
+            return;
+        }
+        try {
+            // Generate a unique ID using extensionId and sourceId
+            const uniqueId = `${series.extensionId}-${series.sourceId}`;
+            
+            // Create a temporary preview series
+            const tempPreviewSeries = {
+                ...series,
+                id: uniqueId, // Use the generated unique ID
+                sourceId: series.sourceId,
+                extensionId: series.extensionId,
+                title: series.title,
+                remoteCoverUrl: series.remoteCoverUrl,
+                description: series.description || '',
+                status: series.status || 'Unknown',
+                originalLanguageKey: series.originalLanguageKey || 'UNKNOWN',
+                authors: series.authors || [],
+                artists: series.artists || [],
+                tags: series.tags || [],
+                altTitles: series.altTitles || [],
+                preview: true
+            };
+
+            // Add to import queue for preview and navigate
+            setImportQueue(prev => [...prev, { series: tempPreviewSeries, getFirst: false }]);
+            navigate(`/series/${encodeURIComponent(uniqueId)}`);
+        } catch (error) {
+            console.error('Navigation error:', error);
+        }
+    };
+
+    return (
+        <div className="flex flex-col w-full max-w-[1800px] mx-auto px-4 py-6 pb-12 space-y-12">
+            {/* Simple Welcome Banner */}
+            <div className="w-full max-w-3xl mx-auto text-center space-y-6 py-8">
+                <h1 className="text-3xl font-semibold">
+                    Welcome to Comicers
+                </h1>
+                <p 
+                    className={`text-muted-foreground transition-opacity duration-200 ease-in-out ${
+                        isQuoteVisible ? 'opacity-100' : 'opacity-0'
+                    }`}
+                >
+                    {quotes[currentQuoteIndex]}
+                </p>
+            </div>
+
+            {loading ? (
+                <div className="flex justify-center items-center h-[300px]">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+            ) : (
+                <div className="space-y-16">
+                    {/* Featured Series */}
+                    {popularSeries.length > 0 && (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[300px]">
+                            <div className="h-full">
+                                <FeaturedCard 
+                                    series={popularSeries[0]} 
+                                    onNavigate={handleSeriesClick}
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4">
+                                {popularSeries.slice(1, 7).map((series, index) => (
+                                    <SeriesCard 
+                                        key={series.id || index} 
+                                        series={series} 
+                                        onNavigate={handleSeriesClick}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <SeriesSection
+                        title="Popular Series"
+                        description="Top rated series from all sources"
+                        series={popularSeries.slice(5)}
+                        onNavigate={handleSeriesClick}
+                        icon={<Flame className="w-5 h-5" />}
+                    />
+
+                    <SeriesSection
+                        title="Recommended For You"
+                        description="Based on your reading history"
+                        series={recommendedSeries}
+                        onNavigate={handleSeriesClick}
+                        icon={<ThumbsUp className="w-5 h-5" />}
+                    />
+
+                    <SeriesSection
+                        title="Trending Now"
+                        description="What's hot right now"
+                        series={trendingSeries}
+                        onNavigate={handleSeriesClick}
+                        icon={<TrendingUp className="w-5 h-5" />}
+                    />
+                </div>
+            )}
+        </div>
+    );
+}

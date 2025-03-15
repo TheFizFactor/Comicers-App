@@ -28,6 +28,8 @@ import { createAutoBackup } from '@/renderer/util/backup';
 import { SidebarProvider } from '@comicers/ui/components/Sidebar';
 import { DashboardSidebar } from './DashboardSidebar';
 import { HomePage } from './HomePage';
+import { OverviewPage } from './OverviewPage';
+import Forum from '../forum/Forum';
 
 interface Props {}
 
@@ -81,7 +83,7 @@ const DashboardPage: React.FC<Props> = () => {
     <SidebarProvider
       style={
         {
-          '--sidebar-width': '200px',
+          '--sidebar-width': '250px',
         } as React.CSSProperties
       }
     >
@@ -89,11 +91,13 @@ const DashboardPage: React.FC<Props> = () => {
       <div className="py-2 px-2 w-full">
         <Routes>
           <Route path="*" element={<HomePage />} />
+          <Route path={`${routes.OVERVIEW}/*`} element={<OverviewPage />} />
           <Route path={`${routes.SERIES}/:id`} element={<SeriesDetails />} />
           <Route path={`${routes.SEARCH}/*`} element={<Search />} />
           <Route path={`${routes.PLUGINS}/*`} element={<Plugins />} />
           <Route path={`${routes.DOWNLOADS}/*`} element={<Downloads />} />
           <Route path={`${routes.LIBRARY}/*`} element={<Library />} />
+          <Route path={`${routes.FORUM}/*`} element={<Forum />} />
         </Routes>
       </div>
     </SidebarProvider>

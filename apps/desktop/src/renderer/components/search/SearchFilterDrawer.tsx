@@ -38,6 +38,11 @@ import {
   SelectValue,
 } from '@comicers/ui/components/Select';
 import { Separator } from '@comicers/ui/components/Separator';
+import { cn } from '@/renderer/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Badge } from '@comicers/ui/components/Badge';
+import { Button } from '@comicers/ui/components/Button';
+import { X } from 'lucide-react';
 
 interface Props {
   filterOptions: FilterOption[];
@@ -45,164 +50,174 @@ interface Props {
 }
 
 const SearchFilterDrawer: React.FC<Props> = (props: Props) => {
-  const searchExtension = useRecoilValue(searchExtensionState);
   const [showingFilterDrawer, setShowingFilterDrawer] = useRecoilState(showingFilterDrawerState);
+  const searchExtension = useRecoilValue(searchExtensionState);
   const [filterValuesMap, setFilterValuesMap] = useRecoilState(filterValuesMapState);
   const [wasChanged, setWasChanged] = useState(false);
 
-  const getOptionValue = (option: FilterOption): unknown => {
-    if (searchExtension in filterValuesMap && option.id in filterValuesMap[searchExtension]) {
-      return filterValuesMap[searchExtension][option.id];
-    }
-    return option.defaultValue;
-  };
-
-  const setOptionValue = (optionId: string, value: unknown) => {
-    const filterValues = filterValuesMap[searchExtension] || {};
-    const newFilterValues = { ...filterValues, [optionId]: value };
-    setFilterValuesMap({ ...filterValuesMap, [searchExtension]: newFilterValues });
+  const handleChange = (id: string, value: any) => {
+    setFilterValuesMap({
+      ...filterValuesMap,
+      [searchExtension]: {
+        ...filterValuesMap[searchExtension],
+        [id]: value,
+      },
+    });
     setWasChanged(true);
   };
 
-  const renderCheckbox = (option: FilterCheckbox) => {
-    return (
-      <div key={option.id} className="flex items-center space-x-2">
-        <Checkbox
-          id={`checkbox${option.id}`}
-          checked={getOptionValue(option) as boolean}
-          onCheckedChange={(checked) => setOptionValue(option.id, checked)}
-          className="w-5 h-5"
-        />
-        <Label htmlFor={`checkbox${option.id}`}>{option.label}</Label>
-      </div>
+  const resetFilters = () => {
+    const defaultValues = Object.fromEntries(
+      props.filterOptions.map((opt) => [opt.id, opt.defaultValue])
     );
+    setFilterValuesMap({
+      ...filterValuesMap,
+      [searchExtension]: defaultValues,
+    });
+    setWasChanged(true);
   };
 
-  const renderTriCheckbox = (option: FilterTriStateCheckbox) => {
+  const getActiveFilterCount = () => {
+    if (!filterValuesMap[searchExtension]) return 0;
+    return Object.entries(filterValuesMap[searchExtension]).filter(([id, value]) => {
+      const option = props.filterOptions.find(opt => opt.id === id);
+      if (!option) return false;
+      return JSON.stringify(value) !== JSON.stringify(option.defaultValue);
+    }).length;
+  };
+
+  const renderControl = (option: FilterOption) => {
+    const value = filterValuesMap[searchExtension]?.[option.id] ?? option.defaultValue;
+    const isModified = JSON.stringify(value) !== JSON.stringify(option.defaultValue);
+
     return (
-      <SearchFilterTriCheckbox
+      <motion.div
         key={option.id}
-        label={option.label}
-        value={getOptionValue(option) as TriState}
-        onChange={(value) => setOptionValue(option.id, value)}
-      />
-    );
-  };
-
-  const renderInput = (option: FilterInput) => {
-    return (
-      <div key={option.id}>
-        <Label>{option.label}</Label>
-        <Input
-          value={getOptionValue(option) as string}
-          placeholder={option.placeholder}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setOptionValue(option.id, e.target.value)
-          }
-        />
-      </div>
-    );
-  };
-
-  const renderSelect = (option: FilterSelect) => {
-    return (
-      <Select
-        value={getOptionValue(option) as string}
-        defaultValue={(option.defaultValue as string) || undefined}
-        onValueChange={(value) => setOptionValue(option.id, value || '')}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        className={cn(
+          'p-4 rounded-lg transition-colors',
+          isModified && 'bg-primary/5'
+        )}
       >
-        <SelectTrigger>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            {option.options.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
+        <div className="flex items-center justify-between mb-2">
+          <Label className="text-sm font-medium">
+            {option.label}
+            {isModified && (
+              <Badge variant="secondary" className="ml-2 bg-primary/10">
+                Modified
+              </Badge>
+            )}
+          </Label>
+          {isModified && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2"
+              onClick={() => handleChange(option.id, option.defaultValue)}
+            >
+              <X className="h-3 w-3" />
+              <span className="ml-1 text-xs">Reset</span>
+            </Button>
+          )}
+        </div>
+        {option.kind === FilterOptionType.Input && (
+          <Input
+            value={value as string}
+            onChange={(e) => handleChange(option.id, e.target.value)}
+            className="w-full"
+          />
+        )}
+        {option.kind === FilterOptionType.Select && (
+          <Select
+            value={value as string}
+            onValueChange={(value) => handleChange(option.id, value)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select option" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {(option as FilterSelect).options.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        )}
+        {option.kind === FilterOptionType.Checkbox && (
+          <Checkbox
+            checked={value as boolean}
+            onCheckedChange={(checked) => handleChange(option.id, checked)}
+          />
+        )}
+        {option.kind === FilterOptionType.TriStateCheckbox && (
+          <SearchFilterTriCheckbox
+            label={option.label}
+            value={value as TriState}
+            onChange={(value) => handleChange(option.id, value)}
+          />
+        )}
+        {option.kind === FilterOptionType.MultiToggle && (
+          <SearchFilterMultiToggle
+            label={option.label}
+            fields={(option as FilterMultiToggle).fields || []}
+            values={value as MultiToggleValues}
+            onChange={(value) => handleChange(option.id, value)}
+          />
+        )}
+        {option.kind === FilterOptionType.Sort && (
+          <SearchFilterSort
+            label={(option as FilterSort).label}
+            fields={(option as FilterSort).fields || []}
+            value={value as FilterSortValue}
+            onChange={(value) => handleChange(option.id, value)}
+            supportsBothDirections={(option as FilterSort).supportsBothDirections}
+          />
+        )}
+        {option.kind === FilterOptionType.Cycle && (
+          <SearchFilterCycle
+            label={option.label}
+            options={(option as FilterCycle).options || []}
+            value={value as string}
+            onChange={(value) => handleChange(option.id, value)}
+          />
+        )}
+      </motion.div>
     );
-  };
-
-  const renderMultiToggle = (option: FilterMultiToggle) => {
-    return (
-      <SearchFilterMultiToggle
-        key={option.id}
-        label={option.label}
-        canExclude={option.isTriState}
-        fields={option.fields || []}
-        values={getOptionValue(option) as MultiToggleValues}
-        onChange={(values) => setOptionValue(option.id, values)}
-      />
-    );
-  };
-
-  const renderSort = (option: FilterSort) => {
-    return (
-      <SearchFilterSort
-        key={option.id}
-        label={option.label}
-        supportsBothDirections={option.supportsBothDirections}
-        fields={option.fields || []}
-        value={getOptionValue(option) as FilterSortValue}
-        onChange={(value) => setOptionValue(option.id, value)}
-      />
-    );
-  };
-
-  const renderCycle = (option: FilterCycle) => {
-    return (
-      <SearchFilterCycle
-        key={option.id}
-        label={option.label}
-        value={getOptionValue(option) as string}
-        options={option.options || []}
-        onChange={(value) => setOptionValue(option.id, value)}
-      />
-    );
-  };
-
-  const renderHeader = (option: FilterHeader) => {
-    return <h3 key={option.id}>{option.label}</h3>;
-  };
-
-  const renderSeparator = (option: FilterSeparator) => {
-    return <Separator key={option.id} className="my-2" />;
   };
 
   const renderControls = () => {
-    return props.filterOptions.map((option) => {
-      switch (option.kind) {
-        case FilterOptionType.Checkbox:
-          return renderCheckbox(option as FilterCheckbox);
-        case FilterOptionType.TriStateCheckbox:
-          return renderTriCheckbox(option as FilterTriStateCheckbox);
-        case FilterOptionType.Input:
-          return renderInput(option as FilterInput);
-        case FilterOptionType.Select:
-          return renderSelect(option as FilterSelect);
-        case FilterOptionType.MultiToggle:
-          return renderMultiToggle(option as FilterMultiToggle);
-        case FilterOptionType.Sort:
-          return renderSort(option as FilterSort);
-        case FilterOptionType.Cycle:
-          return renderCycle(option as FilterCycle);
-        case FilterOptionType.Header:
-          return renderHeader(option as FilterHeader);
-        case FilterOptionType.Separator:
-          return renderSeparator(option as FilterSeparator);
-        default:
-          return undefined;
+    let currentHeader: string | undefined;
+    const controls: JSX.Element[] = [];
+
+    props.filterOptions.forEach((option, index) => {
+      if (option.kind === FilterOptionType.Header) {
+        currentHeader = (option as FilterHeader).label;
+        if (index > 0) {
+          controls.push(
+            <Separator key={`separator-${index}`} className="my-4" />
+          );
+        }
+        controls.push(
+          <h3 key={`header-${index}`} className="text-lg font-semibold mb-4">
+            {currentHeader}
+          </h3>
+        );
+      } else if (option.kind === FilterOptionType.Separator) {
+        controls.push(
+          <Separator key={`separator-${index}`} className="my-4" />
+        );
+      } else {
+        controls.push(renderControl(option));
       }
     });
-  };
 
-  useEffect(() => {
-    if (showingFilterDrawer) setWasChanged(false);
-  }, [showingFilterDrawer]);
+    return controls;
+  };
 
   return (
     <Sheet
@@ -214,12 +229,31 @@ const SearchFilterDrawer: React.FC<Props> = (props: Props) => {
         setShowingFilterDrawer(open);
       }}
     >
-      <SheetContent className="flex flex-col">
-        <SheetHeader>
-          <SheetTitle>Search options</SheetTitle>
+      <SheetContent className="flex flex-col w-[400px] sm:w-[540px]">
+        <SheetHeader className="border-b pb-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <SheetTitle>Search Filters</SheetTitle>
+              <p className="text-sm text-muted-foreground">
+                {getActiveFilterCount()} active filters
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={resetFilters}
+              disabled={getActiveFilterCount() === 0}
+            >
+              Reset All
+            </Button>
+          </div>
         </SheetHeader>
-        <div className="overflow-y-auto overflow-x-hidden pr-3 pl-1">
-          <div className="flex flex-col space-y-2">{renderControls()}</div>
+        <div className="flex-1 overflow-y-auto overflow-x-hidden py-6 px-1">
+          <AnimatePresence>
+            <div className="space-y-4">
+              {renderControls()}
+            </div>
+          </AnimatePresence>
         </div>
       </SheetContent>
     </Sheet>

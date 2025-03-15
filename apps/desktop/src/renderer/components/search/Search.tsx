@@ -20,16 +20,8 @@ import SearchGrid from './SearchGrid';
 import SearchControlBar from './SearchControlBar';
 import SearchFilterDrawer from './SearchFilterDrawer';
 import { Button } from '@comicers/ui/components/Button';
-import { Settings } from 'lucide-react';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@comicers/ui/components/Sheet';
-import { Checkbox } from '@comicers/ui/components/Checkbox';
-import { Label } from '@comicers/ui/components/Label';
+import { Search as SearchIcon } from 'lucide-react';
+import { Input } from '@comicers/ui/components/Input';
 
 const BATCH_SIZE = 3; // Number of concurrent provider searches
 const PROVIDER_TIMEOUT = 15000; // 15 seconds timeout per provider
@@ -39,8 +31,7 @@ const Search: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [extensionList, setExtensionList] = useState<ExtensionMetadata[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [showSettings, setShowSettings] = useState(false);
-  const searchText = useRecoilValue(searchTextState);
+  const [searchText, setSearchText] = useRecoilState(searchTextState);
   const [filterValuesMap, setFilterValuesMap] = useRecoilState(filterValuesMapState);
   const [nextSourcePage, setNextSourcePage] = useRecoilState(nextSourcePageState);
   const [searchResult, setSearchResult] = useRecoilState(searchResultState);
@@ -307,43 +298,60 @@ const Search: React.FC = () => {
         editable={addModalEditable}
       />
       
-      {/* Provider Settings Sheet */}
-      <Sheet open={showSettings} onOpenChange={setShowSettings}>
-        <SheetTrigger asChild>
-          <Button
-            variant="outline"
-            size="icon"
-            className="fixed bottom-4 right-4 z-50 flex items-center justify-center"
-            onClick={() => setShowSettings(true)}
-          >
-            <Settings className="h-[1.2rem] w-[1.2rem]" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>Provider Settings</SheetTitle>
-          </SheetHeader>
-          <div className="py-4">
-            <p className="text-sm text-muted-foreground mb-4">
-              Select which providers to include in "All Providers" search:
-            </p>
-            <div className="space-y-4">
-              {extensionList
-                .filter(ext => ext.id !== FS_METADATA.id)
-                .map(provider => (
-                  <div key={provider.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={provider.id}
-                      checked={enabledProviders.includes(provider.id)}
-                      onCheckedChange={() => toggleProvider(provider.id)}
-                    />
-                    <Label htmlFor={provider.id}>{provider.name}</Label>
-                  </div>
-                ))}
-            </div>
+      {/* Hero Section */}
+      <div className="relative -mt-4 px-8 py-16 bg-gradient-to-br from-primary/5 to-primary/10 overflow-hidden rounded-b-3xl border-b">
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <h1 className="text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80">
+            Explore Comics Universe
+          </h1>
+          <p className="text-lg text-muted-foreground mb-8">
+            Discover manga, manhwa, manhua, and comics from various sources
+          </p>
+          <div className="max-w-2xl mx-auto">
+            <form
+              className="flex space-x-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSearch(true);
+                return false;
+              }}
+            >
+              <div className="relative flex-1">
+                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/70" />
+                <Input
+                  className="pl-10 w-full h-14 text-lg bg-background border-border focus:border-primary/20 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)] hover:bg-accent transition-all rounded-lg"
+                  placeholder="Search for your next favorite series..."
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchText(e.target.value)}
+                />
+              </div>
+              <Button 
+                type="submit" 
+                size="lg"
+                className="h-14 px-8 text-lg font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors rounded-lg"
+              >
+                Search
+              </Button>
+            </form>
           </div>
-        </SheetContent>
-      </Sheet>
+        </div>
+        {/* Decorative elements */}
+        <div className="absolute inset-0 z-0 opacity-30">
+          <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-primary/20 rounded-full blur-3xl" />
+          <div className="absolute bottom-1/4 right-1/4 w-40 h-40 bg-primary/20 rounded-full blur-3xl" />
+        </div>
+      </div>
+
+      {/* Sticky Controls */}
+      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b">
+        <div className="px-4">
+          <SearchControlBar
+            extensionList={extensionList}
+            hasFilterOptions={searchExtension !== 'all' && filterOptions && filterOptions.length > 0}
+            handleSearch={handleSearch}
+            handleSearchFilesystem={handleSearchFilesystem}
+          />
+        </div>
+      </div>
 
       {searchExtension !== 'all' && (
         <SearchFilterDrawer
@@ -354,20 +362,15 @@ const Search: React.FC = () => {
         />
       )}
       
-      <SearchControlBar
-        extensionList={extensionList}
-        hasFilterOptions={searchExtension !== 'all' && filterOptions && filterOptions.length > 0}
-        handleSearch={handleSearch}
-        handleSearchFilesystem={handleSearchFilesystem}
-      />
-      
-      {errorMessage && (
-        <div className="text-red-500 p-4 text-center">
-          {errorMessage}
-        </div>
-      )}
+      <div className="px-4 py-4">
+        {errorMessage && (
+          <div className="text-red-500 p-4 text-center">
+            {errorMessage}
+          </div>
+        )}
 
-      <SearchGrid loading={loading} handleSearch={handleSearch} />
+        <SearchGrid loading={loading} handleSearch={handleSearch} />
+      </div>
     </>
   );
 };

@@ -14,7 +14,7 @@ export const SeriesDetailsBannerBackground: React.FC<Props> = (props: Props) => 
     return (
       <div
         className={cn(
-          'w-full h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-cover',
+          'w-full h-full bg-gradient-to-r from-[#9CEE69] to-[#7BC94D] shadow-lg bg-cover',
         )}
       >
         {props.children}

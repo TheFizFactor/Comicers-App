@@ -1,10 +1,12 @@
 {
   "ABOUT": "/about",
   "HOME": "/",
+  "OVERVIEW": "/overview",
   "PLUGINS": "/plugins",
   "DOWNLOADS": "/downloads",
   "LIBRARY": "/library",
   "READER": "/reader",
   "SEARCH": "/search",
-  "SERIES": "/series"
+  "SERIES": "/series",
+  "FORUM": "/forum"
 }
