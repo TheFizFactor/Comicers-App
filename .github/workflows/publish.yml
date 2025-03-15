@@ -102,6 +102,12 @@ jobs:
           NODE_VERSION: ${{ matrix.node }}
           npm_config_msvs_version: 2022
 
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-artifacts
+          path: apps/desktop/dist/*.exe
+
   create-release:
     needs: [publish-win, publish-linux, publish-mac]
     runs-on: ubuntu-latest
@@ -109,14 +115,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
       - name: Get or create tag
         id: tag
         run: |
           if [[ ! ${{ github.ref }} =~ ^refs/tags/ ]]; then
-            # Get latest tag
             latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-            # Increment patch version
             new_tag=$(echo $latest_tag | awk -F. -v OFS=. '{$NF++;print}')
             echo "Creating new tag: $new_tag"
             git tag $new_tag
@@ -134,6 +143,10 @@ jobs:
           name: Release ${{ steps.tag.outputs.tag }}
           generate_release_notes: true
           prerelease: false
+          files: |
+            artifacts/windows-artifacts/*
+            artifacts/linux-artifacts/*
+            artifacts/macos-artifacts/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -173,6 +186,16 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_OPTIONS: "--max_old_space_size=4096"
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-artifacts
+          path: |
+            apps/desktop/dist/*.AppImage
+            apps/desktop/dist/*.deb
+            apps/desktop/dist/*.rpm
+
   publish-mac:
     strategy:
       matrix:
@@ -215,10 +238,13 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_OPTIONS: "--max_old_space_size=4096"
-          # APPLE_ID: ${{ secrets.APPLE_ID }}
-          # APPLE_ID_PASS: ${{ secrets.APPLE_ID_PASS }}
-          # CSC_LINK: ${{ secrets.CSC_LINK }}
-          # CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-artifacts
+          path: apps/desktop/dist/*.dmg
+
   publish-docs:
     runs-on: ubuntu-latest
     permissions:
