@@ -118,16 +118,37 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Download all artifacts
+      # Download artifacts separately for better error handling
+      - name: Download Windows artifacts
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
-          
+          name: windows-artifacts
+          path: artifacts/windows
+
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-artifacts
+          path: artifacts/linux
+
+      - name: Download macOS artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-artifacts
+          path: artifacts/mac
+
       - name: List downloaded artifacts
         run: |
           echo "Listing artifacts directory:"
-          ls -R artifacts/
-          
+          mkdir -p artifacts
+          ls -la artifacts/
+          echo "Windows artifacts:"
+          ls -la artifacts/windows || echo "No Windows artifacts"
+          echo "Linux artifacts:"
+          ls -la artifacts/linux || echo "No Linux artifacts"
+          echo "macOS artifacts:"
+          ls -la artifacts/mac || echo "No macOS artifacts"
+
       - name: Get or create tag
         id: tag
         run: |
@@ -150,7 +171,10 @@ jobs:
           name: Release ${{ steps.tag.outputs.tag }}
           generate_release_notes: true
           prerelease: false
-          files: artifacts/**/*
+          files: |
+            artifacts/windows/*
+            artifacts/linux/*
+            artifacts/mac/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
