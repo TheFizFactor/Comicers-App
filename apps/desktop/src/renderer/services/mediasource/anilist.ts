@@ -1,5 +1,5 @@
 import { Series } from '@tiyo/common';
-import { FetchBannerImageUrlFunc, ParseBannerImageUrlFunc } from './interface';
+import { FetchBannerImageUrlFunc, ParseBannerImageUrlFunc, BannerImageResponse } from './interface';
 
 const fetchBannerImageUrl: FetchBannerImageUrlFunc = (series: Series) => {
   // Skip AniList API call if no title is available
@@ -51,7 +51,7 @@ const fetchBannerImageUrl: FetchBannerImageUrlFunc = (series: Series) => {
   });
 };
 
-const parseBannerImageUrl: ParseBannerImageUrlFunc = (json: any) => {
+const parseBannerImageUrl: ParseBannerImageUrlFunc = (json: BannerImageResponse) => {
   try {
     const { data } = json;
 
@@ -61,7 +61,7 @@ const parseBannerImageUrl: ParseBannerImageUrlFunc = (json: any) => {
 
     // If no banner image is found, try to use a fallback
     if (data?.Media?.coverImage?.extraLarge || data?.Media?.coverImage?.large) {
-      return data.Media.coverImage.extraLarge || data.Media.coverImage.large;
+      return data.Media.coverImage.extraLarge || data.Media.coverImage.large || null;
     }
 
     return null;

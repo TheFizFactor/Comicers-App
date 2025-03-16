@@ -24,7 +24,7 @@ type SettingEnum =
   | typeof TrackerSetting
   | typeof IntegrationSetting;
 
-type SettingValue = string | boolean | number | string[] | null;
+export type SettingValue = string | boolean | number | string[] | null;
 
 type ParsedSettings = {
   [key in Setting]?: SettingValue;

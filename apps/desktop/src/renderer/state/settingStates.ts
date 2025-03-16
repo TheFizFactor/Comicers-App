@@ -6,6 +6,7 @@ import {
   saveIntegrationSetting,
   saveReaderSetting,
   saveTrackerSetting,
+  type SettingValue,
 } from '../features/settings/utils';
 import {
   DefaultSettings,
@@ -25,12 +26,14 @@ import {
 
 const storedSettings = getAllStoredSettings();
 
-function atm<T>(
+function atm<T extends SettingValue>(
   setting: GeneralSetting | ReaderSetting | TrackerSetting | IntegrationSetting,
 ): RecoilState<T> {
   const atomKey = `setting${setting}`;
   const defaultValue: T =
-    storedSettings[setting] === undefined ? (DefaultSettings as any)[setting] : (storedSettings as any)[setting];
+    storedSettings[setting] === undefined 
+      ? DefaultSettings[setting as keyof typeof DefaultSettings] as T 
+      : storedSettings[setting as keyof typeof storedSettings] as T;
   const effects: AtomEffect<T>[] = [
     ({ onSet }) => {
       onSet((value) => {

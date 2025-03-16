@@ -1,9 +1,13 @@
 import { Series } from '@tiyo/common';
 
-interface BannerImageResponse {
+export interface BannerImageResponse {
   data?: {
     Media?: {
       bannerImage?: string | null;
+      coverImage?: {
+        extraLarge?: string;
+        large?: string;
+      };
     };
   };
 }
