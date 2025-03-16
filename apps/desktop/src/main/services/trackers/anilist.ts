@@ -1,4 +1,4 @@
-import fetch, { Response } from 'node-fetch';
+import fetch from 'node-fetch';
 import {
   GetUsernameFunc,
   GetAuthUrlFunc,
@@ -16,15 +16,25 @@ import { AniListTrackerMetadata } from '@/common/temp_tracker_metadata';
 const clientId = '23253';
 const API_URL = 'https://graphql.anilist.co/';
 
+type AniListStatus = 'CURRENT' | 'PLANNING' | 'COMPLETED' | 'DROPPED' | 'PAUSED' | 'REREADING';
+
 // For AniList, we need to use their implicit flow as they don't support authorization_code
 // flow for custom URL schemes. Users will need to copy the token manually.
-const STATUS_MAP: { [key: string]: TrackStatus } = {
+const STATUS_MAP: Record<AniListStatus, TrackStatus> = {
   CURRENT: TrackStatus.Reading,
   PLANNING: TrackStatus.Planning,
   COMPLETED: TrackStatus.Completed,
   DROPPED: TrackStatus.Dropped,
   PAUSED: TrackStatus.Paused,
   REREADING: TrackStatus.Reading,
+};
+
+const REVERSE_STATUS_MAP: Record<TrackStatus, AniListStatus> = {
+  [TrackStatus.Reading]: 'CURRENT',
+  [TrackStatus.Planning]: 'PLANNING',
+  [TrackStatus.Completed]: 'COMPLETED',
+  [TrackStatus.Dropped]: 'DROPPED',
+  [TrackStatus.Paused]: 'PAUSED',
 };
 
 const SCORE_FORMAT_MAP: { [key: string]: TrackScoreFormat } = {
@@ -117,9 +127,8 @@ export class AniListTrackerClient extends TrackerClientAbstract {
       }
 
       const data = await response.json();
-
       if ('errors' in data) {
-        const errorMessages = data.errors?.map(error => error.message).join('; ');
+        const errorMessages = data.errors?.map((error: { message: string }) => error.message).join('; ');
         throw new Error(`AniList GraphQL error: ${errorMessages}`);
       }
 
@@ -241,7 +250,7 @@ export class AniListTrackerClient extends TrackerClientAbstract {
       const { MediaList: entry } = response.data;
       return {
         id: entry.id.toString(),
-        status: STATUS_MAP[entry.status] || TrackStatus.Reading,
+        status: STATUS_MAP[entry.status as AniListStatus] || TrackStatus.Reading,
         score: entry.score,
         progress: entry.progress,
         seriesId: entry.media.id.toString(),
@@ -256,10 +265,15 @@ export class AniListTrackerClient extends TrackerClientAbstract {
   };
 
   addLibraryEntry: AddLibraryEntryFunc = async (trackEntry: TrackEntry) => {
-    if (this.accessToken === '') return new Promise((resolve) => resolve(null));
+    if (this.accessToken === '') return null;
+    if (!trackEntry.seriesId) return null;
 
     if (this.userId === '') await this.getUsername();
     if (this.userId === '') return null;
+
+    const status: AniListStatus = trackEntry.status 
+      ? REVERSE_STATUS_MAP[trackEntry.status] || 'CURRENT'
+      : 'CURRENT';
 
     const query = `
       mutation AddManga(${'$'}mangaId: Int, ${'$'}progress: Int, ${'$'}status: MediaListStatus) {
@@ -269,58 +283,39 @@ export class AniListTrackerClient extends TrackerClientAbstract {
         } 
       }`.trim();
 
-    const url = 'https://graphql.anilist.co';
-    const options = {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.accessToken}`,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify({
+    try {
+      const response = await this.makeGraphQLRequest<{ SaveMediaListEntry: { id: number; status: string } }>(
         query,
-        variables: {
-          mangaId: trackEntry.seriesId,
+        {
+          mangaId: parseInt(trackEntry.seriesId, 10),
           progress: trackEntry.progress,
-          status: Object.keys(STATUS_MAP).find(
-            (key: string) => STATUS_MAP[key] === trackEntry.status,
-          ),
-        },
-      }),
-    };
+          status,
+        }
+      );
 
-    return (
-      fetch(url, options)
-        .then((response: Response) => response.json())
-        // biome-ignore lint/suspicious/noExplicitAny: TODO external schema
-        .then((data: any) => {
-          if ('errors' in data) {
-            console.error(
-              `Error adding library entry for series ${trackEntry.seriesId} from tracker ${
-                AniListTrackerMetadata.id
-                // biome-ignore lint/suspicious/noExplicitAny: TODO external schema
-              }: ${data.errors.map((error: any) => error.message).join('; ')}`,
-            );
-            return null;
-          }
-          return this.getLibraryEntry(trackEntry.seriesId);
-        })
-        .catch((e: Error) => {
-          console.error(e);
-          return null;
-        })
-    );
+      if (!response) return null;
+
+      return this.getLibraryEntry(trackEntry.seriesId);
+    } catch (error: unknown) {
+      console.error('Failed to add AniList library entry:', error instanceof Error ? error.message : error);
+      return null;
+    }
   };
 
   updateLibraryEntry: UpdateLibraryEntryFunc = async (trackEntry: TrackEntry) => {
-    if (this.accessToken === '') return new Promise((resolve) => resolve(null));
+    if (this.accessToken === '') return null;
+    if (!trackEntry.seriesId) return null;
+    if (!trackEntry.id) return null;
 
     if (this.userId === '' || this.userScoreFormat === undefined) await this.getUsername();
     if (this.userId === '') return null;
 
     const prevEntry = await this.getLibraryEntry(trackEntry.seriesId);
-    if (prevEntry === null)
-      return this.addLibraryEntry(trackEntry).then(() => this.updateLibraryEntry(trackEntry));
+    if (prevEntry === null) {
+      const addedEntry = await this.addLibraryEntry(trackEntry);
+      if (!addedEntry) return null;
+      return this.updateLibraryEntry({ ...trackEntry, id: addedEntry.id });
+    }
 
     trackEntry.id = prevEntry.id;
     if (trackEntry.progress === undefined) {
@@ -332,6 +327,10 @@ export class AniListTrackerClient extends TrackerClientAbstract {
     if (trackEntry.score === undefined) {
       trackEntry.score = prevEntry.score;
     }
+
+    const status: AniListStatus = trackEntry.status 
+      ? REVERSE_STATUS_MAP[trackEntry.status] || 'CURRENT'
+      : 'CURRENT';
 
     const query = `
       mutation UpdateManga (
@@ -346,47 +345,22 @@ export class AniListTrackerClient extends TrackerClientAbstract {
         }
       }`.trim();
 
-    const url = 'https://graphql.anilist.co';
-    const options = {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.accessToken}`,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify({
-        query,
-        variables: {
-          listId: trackEntry.id,
-          progress: trackEntry.progress,
-          status: Object.keys(STATUS_MAP).find(
-            (key: string) => STATUS_MAP[key] === trackEntry.status,
-          ),
-          score: trackEntry.score === undefined ? 0 : trackEntry.score,
-        },
-      }),
-    };
+    try {
+      const response = await this.makeGraphQLRequest<{
+        SaveMediaListEntry: { id: number; progress: number; status: string };
+      }>(query, {
+        listId: parseInt(trackEntry.id!, 10),
+        progress: trackEntry.progress,
+        status,
+        score: trackEntry.score ?? 0,
+      });
 
-    return (
-      fetch(url, options)
-        .then((response: Response) => response.json())
-        // biome-ignore lint/suspicious/noExplicitAny: TODO external schema
-        .then((data: any) => {
-          if ('errors' in data) {
-            console.error(
-              `Error updating library entry for series ${trackEntry.seriesId} from tracker ${
-                AniListTrackerMetadata.id
-                // biome-ignore lint/suspicious/noExplicitAny: TODO external schema
-              }: ${data.errors.map((error: any) => error.message).join('; ')}`,
-            );
-            return null;
-          }
-          return this.getLibraryEntry(trackEntry.seriesId);
-        })
-        .catch((e: Error) => {
-          console.error(e);
-          return null;
-        })
-    );
+      if (!response) return null;
+
+      return this.getLibraryEntry(trackEntry.seriesId);
+    } catch (error: unknown) {
+      console.error('Failed to update AniList library entry:', error instanceof Error ? error.message : error);
+      return null;
+    }
   };
 }
