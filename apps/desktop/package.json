@@ -16,9 +16,10 @@
   },
   "build": {
     "productName": "Comicers",
-    "appId": "com.comicers.org",
+    "appId": "org.comicers.desktop",
     "files": [
-      "out/**/*"
+      "dist/**/*",
+      "node_modules/**/*"
     ],
     "asar": true,
     "asarUnpack": ["**/*.node"],
@@ -31,7 +32,8 @@
       "identity": null,
       "entitlements": null,
       "entitlementsInherit": null,
-      "gatekeeperAssess": false
+      "gatekeeperAssess": false,
+      "category": "public.app-category.entertainment"
     },
     "dmg": {
       "sign": false,
@@ -92,23 +94,29 @@
     },
     "linux": {
       "target": [
-        "AppImage"
+        "AppImage",
+        "deb",
+        "rpm"
       ],
-      "category": "Development"
+      "category": "Entertainment"
     },
     "directories": {
-      "buildResources": "assets",
-      "output": "release"
+      "buildResources": "resources",
+      "output": "dist"
     },
     "extraResources": [
-      "./assets/**"
+      {
+        "from": "../../packages/ui/dist",
+        "to": "packages/ui/dist",
+        "filter": ["**/*"]
+      }
     ],
     "publish": {
       "provider": "github",
       "owner": "TheFizFactor",
       "repo": "Comicers-App",
       "private": true,
-      "releaseType": "release"
+      "releaseType": "draft"
     }
   },
   "repository": {
