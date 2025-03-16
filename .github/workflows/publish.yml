@@ -118,15 +118,7 @@ jobs:
       # Package with modified environment variables
       - name: Package Windows app
         run: |
-          cd apps/desktop
-          echo "Current directory:"
-          pwd
-          echo "Directory contents:"
-          dir
-          echo "Package.json contents:"
-          cat package.json
-          echo "Building app..."
-          pnpm dist:win --publish never
+          cd apps/desktop && pnpm dist:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_OPTIONS: "--max_old_space_size=4096"
@@ -135,30 +127,14 @@ jobs:
           NODE_VERSION: ${{ matrix.node }}
           npm_config_msvs_version: 2022
           APP_VERSION: ${{ needs.create-tag.outputs.tag }}
-          DEBUG: electron-builder
 
-      - name: List build directories
-        run: |
-          echo "Listing possible build directories:"
-          cd apps/desktop
-          echo "Current directory:"
-          dir
-          echo "Release directory (if exists):"
-          dir release || echo "No release directory"
-          echo "Dist directory (if exists):"
-          dir dist || echo "No dist directory"
-          echo "Build directory (if exists):"
-          dir build || echo "No build directory"
-          
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
           name: windows-artifacts
           path: |
-            apps/desktop/release/*.exe
-            apps/desktop/release/latest*.yml
-            apps/desktop/release/*.zip
-            apps/desktop/release/*.blockmap
+            apps/desktop/dist/*.exe
+            apps/desktop/dist/latest*.yml
 
   create-release:
     needs: [create-tag, publish-win, publish-linux, publish-mac]
@@ -233,13 +209,6 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
-
-      # Install Linux system dependencies
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
-
       - name: Cache Electron
         uses: actions/cache@v3
         with:
@@ -249,70 +218,27 @@ jobs:
           key: ${{ runner.os }}-electron-cache-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-electron-cache-
-
       - name: Create pnpm store directory
         run: mkdir -p $(pnpm store path)
-
       - name: Clean pnpm store
         run: pnpm store prune || true
-
       - name: Install dependencies
         run: pnpm i --no-frozen-lockfile --fetch-timeout 600000
-
-      # Add build step before packaging
-      - name: Build app
-        run: |
-          pnpm build
-          cd apps/desktop
-          echo "Checking out directory:"
-          ls -la out/main || echo "No out/main directory"
-        env:
-          NODE_OPTIONS: "--max_old_space_size=4096"
-          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
-
-      # Then install native modules separately in the desktop app directory
-      - name: Install native modules
-        run: |
-          cd apps/desktop
-          pnpm remove bufferutil utf-8-validate register-scheme
-          pnpm add bufferutil@4.0.9 utf-8-validate@6.0.5
-          pnpm add register-scheme@0.0.2 --save-optional
-        env:
-          npm_config_build_from_source: false
-          NODE_VERSION: ${{ matrix.node }}
-
       - name: Build and package Linux app
-        run: |
-          cd apps/desktop
-          echo "Current directory contents:"
-          ls -la
-          echo "Building Linux app..."
-          pnpm dist:linux --publish never
+        run: pnpm dist:linux
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_OPTIONS: "--max_old_space_size=4096"
-          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
-          DEBUG: electron-builder
-
-      - name: List Linux build directories
-        run: |
-          cd apps/desktop
-          echo "Release directory contents:"
-          ls -la release || echo "No release directory"
-          echo "Out directory contents:"
-          ls -la out || echo "No out directory"
-          echo "Main directory contents:"
-          ls -la out/main || echo "No main directory"
 
       - name: Upload Linux artifacts
         uses: actions/upload-artifact@v4
         with:
           name: linux-artifacts
           path: |
-            apps/desktop/release/*.AppImage
-            apps/desktop/release/*.deb
-            apps/desktop/release/*.rpm
-            apps/desktop/release/latest*.yml
+            apps/desktop/dist/*.AppImage
+            apps/desktop/dist/*.deb
+            apps/desktop/dist/*.rpm
+            apps/desktop/dist/latest*.yml
 
   publish-mac:
     strategy:
@@ -358,29 +284,18 @@ jobs:
           ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
 
       - name: Build and package macOS app
-        run: |
-          cd apps/desktop
-          pnpm dist:mac --publish never
+        run: cd apps/desktop && pnpm dist:mac
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_OPTIONS: "--max_old_space_size=4096"
-          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
-
-      - name: List macOS build directories
-        run: |
-          cd apps/desktop
-          echo "Release directory contents:"
-          ls -la release || echo "No release directory"
-          echo "Dist directory contents:"
-          ls -la dist || echo "No dist directory"
 
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
         with:
           name: macos-artifacts
           path: |
-            apps/desktop/release/*.dmg
-            apps/desktop/release/latest*.yml
+            apps/desktop/dist/*.dmg
+            apps/desktop/dist/latest*.yml
 
   publish-docs:
     runs-on: ubuntu-latest
