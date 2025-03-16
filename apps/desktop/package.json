@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
+    "build:ui": "cd ../../packages/ui && pnpm build",
     "preview": "electron-vite preview",
     "lint": "biome lint src",
     "dist:win": "cross-env ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES=1 npm_config_build_from_source=false npm_config_msvs_version=2022 pnpm electron-builder --publish onTagOrDraft --win",
@@ -23,99 +24,33 @@
     ],
     "asar": true,
     "asarUnpack": ["**/*.node"],
-    "mac": {
-      "target": [
-        "dmg"
-      ],
-      "type": "development",
-      "hardenedRuntime": false,
-      "identity": null,
-      "entitlements": null,
-      "entitlementsInherit": null,
-      "gatekeeperAssess": false,
-      "category": "public.app-category.entertainment"
-    },
-    "dmg": {
-      "sign": false,
-      "contents": [
-        {
-          "x": 130,
-          "y": 220
-        },
-        {
-          "x": 410,
-          "y": 220,
-          "type": "link",
-          "path": "/Applications"
-        }
-      ]
-    },
-    "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        },
-        {
-          "target": "portable",
-          "arch": [
-            "x64"
-          ]
-        },
-        {
-          "target": "zip",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
-      "signingHashAlgorithms": null,
-      "sign": null,
-      "artifactName": "Comicers-${version}-win.${ext}"
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "Comicers",
-      "uninstallDisplayName": "Comicers",
-      "artifactName": "Comicers-Setup-${version}.${ext}",
-      "include": "installer.nsh",
-      "installerIcon": "assets/icons/win/icon.ico",
-      "uninstallerIcon": "assets/icons/win/icon.ico",
-      "installerHeaderIcon": "assets/icons/win/icon.ico",
-      "license": "LICENSE.txt",
-      "allowElevation": true,
-      "runAfterFinish": true,
-      "differentialPackage": true
-    },
-    "linux": {
-      "target": [
-        "AppImage",
-        "deb",
-        "rpm"
-      ],
-      "category": "Entertainment"
-    },
+    "beforeBuild": ["pnpm run build:ui"],
     "directories": {
       "buildResources": "resources",
       "output": "dist"
     },
-    "extraResources": [
+    "extraFiles": [
       {
         "from": "../../packages/ui/dist",
-        "to": "packages/ui/dist",
+        "to": "./resources/ui/dist",
         "filter": ["**/*"]
       }
     ],
+    "externals": ["@comicers/ui"],
+    "nodeGypRebuild": false,
+    "mac": {
+      "target": ["dmg"],
+      "category": "public.app-category.entertainment"
+    },
+    "win": {
+      "target": ["nsis"]
+    },
+    "linux": {
+      "target": ["AppImage", "deb", "rpm"],
+      "category": "Entertainment"
+    },
     "publish": {
       "provider": "github",
-      "owner": "TheFizFactor",
-      "repo": "Comicers-App",
-      "private": true,
       "releaseType": "draft"
     }
   },
