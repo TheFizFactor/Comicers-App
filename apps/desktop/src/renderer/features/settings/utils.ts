@@ -24,6 +24,12 @@ type SettingEnum =
   | typeof TrackerSetting
   | typeof IntegrationSetting;
 
+type SettingValue = string | boolean | number | string[] | null;
+
+type ParsedSettings = {
+  [key in Setting]?: SettingValue;
+};
+
 const getStoreValues = (storePrefix: string, settingEnum: SettingEnum): StoreValues => {
   const values: StoreValues = {};
   Object.values(settingEnum).forEach((setting: Setting) => {
@@ -32,15 +38,24 @@ const getStoreValues = (storePrefix: string, settingEnum: SettingEnum): StoreVal
   return values;
 };
 
-// biome-ignore lint/suspicious/noExplicitAny: arbitrary schema
-const parseStoreValues = (storeValues: StoreValues): { [key in Setting]?: any } => {
-  // biome-ignore lint/suspicious/noExplicitAny: arbitrary schema
-  const settings: { [key in Setting]?: any } = {};
+const getSettingType = (settingKey: Setting): SettingType | undefined => {
+  if (settingKey in SettingTypes) {
+    return SettingTypes[settingKey as keyof typeof SettingTypes];
+  }
+  return undefined;
+};
+
+const parseStoreValues = (storeValues: StoreValues): ParsedSettings => {
+  const settings: ParsedSettings = {};
   Object.entries(storeValues)
     .filter(([, value]) => value !== null)
     .forEach(([key, value]) => {
       const settingKey = key as Setting;
-      switch (SettingTypes[settingKey]) {
+      const settingType = getSettingType(settingKey);
+      
+      if (!settingType || !value) return;
+
+      switch (settingType) {
         case SettingType.BOOLEAN:
           settings[settingKey] = value === 'true';
           break;
@@ -51,7 +66,7 @@ const parseStoreValues = (storeValues: StoreValues): { [key in Setting]?: any } 
           settings[settingKey] = value ? value.split(',') : [];
           break;
         case SettingType.NUMBER:
-          settings[settingKey] = parseInt(value as string, 10);
+          settings[settingKey] = parseInt(value, 10);
           break;
         default:
           break;
@@ -72,27 +87,23 @@ export const getAllStoredSettings = () => {
   return settings;
 };
 
-// biome-ignore lint/suspicious/noExplicitAny: arbitrary schema
-export function saveGeneralSetting(key: GeneralSetting, value: any) {
-  persistantStore.write(`${storeKeys.SETTINGS.GENERAL_PREFIX}${key}`, value);
+export function saveGeneralSetting(key: GeneralSetting, value: SettingValue) {
+  persistantStore.write(`${storeKeys.SETTINGS.GENERAL_PREFIX}${key}`, String(value));
   console.info(`Set GeneralSetting ${key} to ${value}`);
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: arbitrary schema
-export function saveReaderSetting(key: ReaderSetting, value: any) {
-  persistantStore.write(`${storeKeys.SETTINGS.READER_PREFIX}${key}`, value);
+export function saveReaderSetting(key: ReaderSetting, value: SettingValue) {
+  persistantStore.write(`${storeKeys.SETTINGS.READER_PREFIX}${key}`, String(value));
   console.info(`Set ReaderSetting ${key} to ${value}`);
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: arbitrary schema
-export function saveTrackerSetting(key: TrackerSetting, value: any) {
-  persistantStore.write(`${storeKeys.SETTINGS.TRACKER_PREFIX}${key}`, value);
+export function saveTrackerSetting(key: TrackerSetting, value: SettingValue) {
+  persistantStore.write(`${storeKeys.SETTINGS.TRACKER_PREFIX}${key}`, String(value));
   console.info(`Set TrackerSetting ${key} to ${value}`);
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: arbitrary schema
-export function saveIntegrationSetting(key: IntegrationSetting, value: any) {
-  persistantStore.write(`${storeKeys.SETTINGS.INTEGRATION_PREFIX}${key}`, value);
+export function saveIntegrationSetting(key: IntegrationSetting, value: SettingValue) {
+  persistantStore.write(`${storeKeys.SETTINGS.INTEGRATION_PREFIX}${key}`, String(value));
   console.info(`Set IntegrationSetting ${key} to ${value}`);
 }
 

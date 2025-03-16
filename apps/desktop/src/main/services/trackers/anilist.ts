@@ -50,6 +50,39 @@ interface AniListUserData {
   };
 }
 
+interface AniListMediaTitle {
+  romaji: string;
+}
+
+interface AniListCoverImage {
+  large: string;
+}
+
+interface AniListMedia {
+  id: number;
+  title: AniListMediaTitle;
+  coverImage: AniListCoverImage;
+  description: string | null;
+}
+
+interface AniListSearchResponse {
+  Page: {
+    media: AniListMedia[];
+  };
+}
+
+interface AniListMediaList {
+  id: number;
+  status: string;
+  score: number;
+  progress: number;
+  media: AniListMedia;
+}
+
+interface AniListLibraryResponse {
+  MediaList: AniListMediaList | null;
+}
+
 export class AniListTrackerClient extends TrackerClientAbstract {
   userId: string;
   userScoreFormat?: TrackScoreFormat;
@@ -86,13 +119,13 @@ export class AniListTrackerClient extends TrackerClientAbstract {
       const data = await response.json();
 
       if ('errors' in data) {
-        const errorMessages = data.errors.map((error: { message: string }) => error.message).join('; ');
+        const errorMessages = data.errors?.map(error => error.message).join('; ');
         throw new Error(`AniList GraphQL error: ${errorMessages}`);
       }
 
       return data as AniListGraphQLResponse<T>;
-    } catch (error) {
-      console.error('AniList request failed:', error);
+    } catch (error: unknown) {
+      console.error('AniList request failed:', error instanceof Error ? error.message : error);
       return null;
     }
   }
@@ -136,8 +169,8 @@ export class AniListTrackerClient extends TrackerClientAbstract {
     }
   };
 
-  search: SearchFunc = (text: string) => {
-    if (this.accessToken === '') return new Promise((resolve) => resolve([]));
+  search: SearchFunc = async (text: string) => {
+    if (this.accessToken === '') return [];
 
     const query = `
       query Search(${'$'}query: String) {
@@ -155,48 +188,24 @@ export class AniListTrackerClient extends TrackerClientAbstract {
         }
       }`.trim();
 
-    const url = 'https://graphql.anilist.co';
-    const options = {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.accessToken}`,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify({ query, variables: { query: text } }),
-    };
+    try {
+      const response = await this.makeGraphQLRequest<AniListSearchResponse>(query, { query: text });
+      if (!response) return [];
 
-    return (
-      fetch(url, options)
-        .then((response: Response) => response.json())
-        // biome-ignore lint/suspicious/noExplicitAny: TODO external schema
-        .then((data: any) => {
-          if ('errors' in data) {
-            console.error(
-              `Error searching from tracker ${AniListTrackerMetadata.id}: ${data.errors
-                // biome-ignore lint/suspicious/noExplicitAny: TODO external schema
-                .map((error: any) => error.message)
-                .join('; ')}`,
-            );
-            return null;
-          }
-          // biome-ignore lint/suspicious/noExplicitAny: TODO external schema
-          return data.data.Page.media.map((media: any) => ({
-            id: media.id,
-            title: media.title.romaji,
-            description: media.description === null ? '' : media.description,
-            coverUrl: media.coverImage.large,
-          }));
-        })
-        .catch((e: Error) => {
-          console.error(e);
-          return [];
-        })
-    );
+      return response.data.Page.media.map(media => ({
+        id: media.id.toString(),
+        title: media.title.romaji,
+        description: media.description || '',
+        coverUrl: media.coverImage.large,
+      }));
+    } catch (error: unknown) {
+      console.error('Failed to search AniList:', error instanceof Error ? error.message : error);
+      return [];
+    }
   };
 
   getLibraryEntry: GetLibraryEntryFunc = async (seriesId: string) => {
-    if (this.accessToken === '') return new Promise((resolve) => resolve(null));
+    if (this.accessToken === '') return null;
 
     if (this.userId === '' || this.userScoreFormat === undefined) await this.getUsername();
     if (this.userId === '') return null;
@@ -221,51 +230,29 @@ export class AniListTrackerClient extends TrackerClientAbstract {
         }
       }`.trim();
 
-    const url = 'https://graphql.anilist.co';
-    const options = {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.accessToken}`,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify({
-        query,
-        variables: { id: this.userId, manga_id: seriesId },
-      }),
-    };
+    try {
+      const response = await this.makeGraphQLRequest<AniListLibraryResponse>(query, {
+        id: parseInt(this.userId, 10),
+        manga_id: parseInt(seriesId, 10),
+      });
 
-    return (
-      fetch(url, options)
-        .then((response: Response) => response.json())
-        // biome-ignore lint/suspicious/noExplicitAny: TODO external schema
-        .then((data: any) => {
-          if ('errors' in data) {
-            console.warn(
-              `Error getting library entry for series ${seriesId} from tracker from tracker ${
-                AniListTrackerMetadata.id
-                // biome-ignore lint/suspicious/noExplicitAny: TODO external schema
-              }: ${data.errors.map((error: any) => error.message).join('; ')}`,
-            );
-            return null;
-          }
-          return {
-            id: data.data.MediaList.id,
-            seriesId: data.data.MediaList.media.id,
-            title: data.data.MediaList.media.title.romaji,
-            description: data.data.MediaList.media.description,
-            coverUrl: data.data.MediaList.media.coverImage.large,
-            score: data.data.MediaList.score,
-            scoreFormat: this.userScoreFormat,
-            progress: data.data.MediaList.progress,
-            status: STATUS_MAP[data.data.MediaList.status],
-          } as TrackEntry;
-        })
-        .catch((e: Error) => {
-          console.error(e);
-          return null;
-        })
-    );
+      if (!response || !response.data.MediaList) return null;
+
+      const { MediaList: entry } = response.data;
+      return {
+        id: entry.id.toString(),
+        status: STATUS_MAP[entry.status] || TrackStatus.Reading,
+        score: entry.score,
+        progress: entry.progress,
+        seriesId: entry.media.id.toString(),
+        title: entry.media.title.romaji,
+        description: entry.media.description || '',
+        coverUrl: entry.media.coverImage.large,
+      };
+    } catch (error: unknown) {
+      console.error('Failed to get AniList library entry:', error instanceof Error ? error.message : error);
+      return null;
+    }
   };
 
   addLibraryEntry: AddLibraryEntryFunc = async (trackEntry: TrackEntry) => {
