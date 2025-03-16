@@ -31,6 +31,13 @@ import {
   Trash2Icon,
   MessageCircle,
   ChartBar,
+  Star,
+  Vote,
+  Sparkles,
+  Headphones,
+  Wallet,
+  Copy,
+  Coffee,
 } from 'lucide-react';
 import {
   Collapsible,
@@ -71,10 +78,11 @@ import {
 import { EditCategoryDialog } from './EditCategoryDialog';
 import { RemoveCategoryDialog } from './RemoveCategoryDialog';
 import { cn } from '@/renderer/lib/utils';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@comicers/ui/components/Table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@comicers/ui/components/Tabs';
 import { Bitcoin, Coins, Github } from 'lucide-react';
 import { Label } from '@comicers/ui/components/Label';
+import { Separator } from '@comicers/ui/components/Separator';
+import { useToast } from '@comicers/ui/hooks/use-toast';
 
 export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const navigate = useNavigate();
@@ -86,6 +94,7 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
   const [selectedCategory, setSelectedCategory] = useState<Category | undefined>(undefined);
   const categories = useRecoilValue(categoryListState);
   const [libraryFilterCategory, setLibraryFilterCategory] = useRecoilState(libraryFilterCategoryState);
+  const { toast } = useToast();
 
   const handleUpdateCheck = () => {
     if (!checkingForUpdate) {
@@ -352,102 +361,173 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
               </DialogTrigger>
               <DialogContent className="sm:max-w-[600px]">
                 <DialogHeader>
-                  <DialogTitle>Support Comicers Development</DialogTitle>
-                  <DialogDescription>
+                  <DialogTitle className="flex items-center gap-2 text-2xl">
+                    <Heart className="h-6 w-6 text-primary fill-primary" />
+                    Support Comicers
+                  </DialogTitle>
+                  <DialogDescription className="text-base">
                     Help us make Comicers even better by supporting the project
                   </DialogDescription>
                 </DialogHeader>
                 
                 <div className="space-y-6">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Benefit</TableHead>
-                        <TableHead>Description</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      <TableRow>
-                        <TableCell className="font-medium">Feature Voting</TableCell>
-                        <TableCell>Get a vote on upcoming features and influence development priorities</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell className="font-medium">Discord Role</TableCell>
-                        <TableCell>Exclusive Supporter role in our Discord community</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell className="font-medium">Early Access</TableCell>
-                        <TableCell>Test new features before they're released</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell className="font-medium">Priority Support</TableCell>
-                        <TableCell>Get faster responses to your questions and issues</TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
+                  <div className="bg-muted/50 rounded-lg p-4 border">
+                    <h3 className="font-semibold mb-3 flex items-center gap-2">
+                      <Star className="h-5 w-5 text-primary fill-primary" />
+                      Supporter Benefits
+                    </h3>
+                    <div className="grid gap-3">
+                      <div className="flex items-start gap-3">
+                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <Vote className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium">Feature Voting</p>
+                          <p className="text-sm text-muted-foreground">Get a vote on upcoming features and influence development priorities</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <MessageCircle className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium">Discord Role</p>
+                          <p className="text-sm text-muted-foreground">Exclusive Supporter role in our Discord community</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <Sparkles className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium">Early Access</p>
+                          <p className="text-sm text-muted-foreground">Test new features before they're released</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <Headphones className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium">Priority Support</p>
+                          <p className="text-sm text-muted-foreground">Get faster responses to your questions and issues</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
-                  <Tabs defaultValue="github" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3">
-                      <TabsTrigger value="github" className="flex items-center gap-2">
-                        <Github className="h-4 w-4" />
-                        GitHub
-                      </TabsTrigger>
-                      <TabsTrigger value="crypto" className="flex items-center gap-2">
-                        <Bitcoin className="h-4 w-4" />
-                        Crypto
-                      </TabsTrigger>
-                      <TabsTrigger value="other" className="flex items-center gap-2">
-                        <Coins className="h-4 w-4" />
-                        Other
-                      </TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="github" className="space-y-4">
-                      <p className="text-sm text-muted-foreground">
-                        Support us through GitHub Sponsors with monthly or one-time donations.
-                      </p>
-                      <Button 
-                        className="w-full"
-                        onClick={() => window.open('https://github.com/sponsors/TheFizFactor', '_blank')}
-                      >
-                        <Github className="mr-2 h-4 w-4" />
-                        Sponsor on GitHub
-                      </Button>
-                    </TabsContent>
-                    <TabsContent value="crypto" className="space-y-4">
-                      <div className="grid gap-4">
-                        <div className="space-y-2">
-                          <Label>Bitcoin (BTC)</Label>
-                          <code className="relative block w-full rounded bg-muted p-3 font-mono text-sm">
-                            bc1qpwvvrjzdwjgw94wknas7yk0qlurh46exwqjvdp
-                          </code>
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <h3 className="font-semibold flex items-center gap-2">
+                      <Wallet className="h-5 w-5" />
+                      Support Options
+                    </h3>
+                    <Tabs defaultValue="github" className="w-full">
+                      <TabsList className="grid w-full grid-cols-3">
+                        <TabsTrigger value="github" className="flex items-center gap-2">
+                          <Github className="h-4 w-4" />
+                          GitHub
+                        </TabsTrigger>
+                        <TabsTrigger value="crypto" className="flex items-center gap-2">
+                          <Bitcoin className="h-4 w-4" />
+                          Crypto
+                        </TabsTrigger>
+                        <TabsTrigger value="other" className="flex items-center gap-2">
+                          <Coffee className="h-4 w-4" />
+                          Other
+                        </TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="github" className="space-y-4">
+                        <div className="bg-muted/30 rounded-lg p-4">
+                          <p className="text-sm text-muted-foreground">
+                            Support us through GitHub Sponsors with monthly or one-time donations. GitHub Sponsors is the preferred way to support Comicers as it helps us maintain and improve the project.
+                          </p>
                         </div>
-                        <div className="space-y-2">
-                          <Label>Litecoin (LTC)</Label>
-                          <code className="relative block w-full rounded bg-muted p-3 font-mono text-sm">
-                            LNrQarKkQqm4GVLk7yAz3vic7cXhKqFXjz
-                          </code>
+                        <Button 
+                          className="w-full"
+                          onClick={() => window.open('https://github.com/sponsors/TheFizFactor', '_blank')}
+                        >
+                          <Github className="mr-2 h-4 w-4" />
+                          Sponsor on GitHub
+                        </Button>
+                      </TabsContent>
+                      <TabsContent value="crypto" className="space-y-4">
+                        <div className="grid gap-4">
+                          <div className="space-y-2">
+                            <Label className="flex items-center gap-2">
+                              <Bitcoin className="h-4 w-4" />
+                              Bitcoin (BTC)
+                            </Label>
+                            <div className="relative">
+                              <code className="relative block w-full rounded bg-muted p-3 font-mono text-sm">
+                                bc1qpwvvrjzdwjgw94wknas7yk0qlurh46exwqjvdp
+                              </code>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="absolute right-2 top-2 h-6"
+                                onClick={() => {
+                                  navigator.clipboard.writeText('bc1qpwvvrjzdwjgw94wknas7yk0qlurh46exwqjvdp');
+                                  toast({
+                                    title: "Copied to clipboard",
+                                    description: "BTC address has been copied to your clipboard"
+                                  });
+                                }}
+                              >
+                                <Copy className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="flex items-center gap-2">
+                              <Coins className="h-4 w-4" />
+                              Litecoin (LTC)
+                            </Label>
+                            <div className="relative">
+                              <code className="relative block w-full rounded bg-muted p-3 font-mono text-sm">
+                                LNrQarKkQqm4GVLk7yAz3vic7cXhKqFXjz
+                              </code>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="absolute right-2 top-2 h-6"
+                                onClick={() => {
+                                  navigator.clipboard.writeText('LNrQarKkQqm4GVLk7yAz3vic7cXhKqFXjz');
+                                  toast({
+                                    title: "Copied to clipboard",
+                                    description: "LTC address has been copied to your clipboard"
+                                  });
+                                }}
+                              >
+                                <Copy className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </TabsContent>
-                    <TabsContent value="other" className="space-y-4">
-                      <div className="grid gap-4">
-                        <Button 
-                          variant="outline" 
-                          className="w-full"
-                          onClick={() => window.open('https://www.buymeacoffee.com/comicers', '_blank')}
-                        >
-                          Buy Me a Coffee
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          className="w-full"
-                          onClick={() => window.open('https://ko-fi.com/comicers', '_blank')}
-                        >
-                          Support on Ko-fi
-                        </Button>
-                      </div>
-                    </TabsContent>
-                  </Tabs>
+                      </TabsContent>
+                      <TabsContent value="other" className="space-y-4">
+                        <div className="grid gap-4">
+                          <Button 
+                            variant="outline" 
+                            className="w-full"
+                            onClick={() => window.open('https://www.buymeacoffee.com/comicers', '_blank')}
+                          >
+                            <Coffee className="mr-2 h-4 w-4" />
+                            Buy Me a Coffee
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            className="w-full"
+                            onClick={() => window.open('https://ko-fi.com/comicers', '_blank')}
+                          >
+                            <Coffee className="mr-2 h-4 w-4" />
+                            Support on Ko-fi
+                          </Button>
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+                  </div>
                 </div>
               </DialogContent>
             </Dialog>

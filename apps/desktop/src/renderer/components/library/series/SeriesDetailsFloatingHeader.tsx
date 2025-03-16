@@ -17,42 +17,44 @@ const SeriesDetailsFloatingHeader: React.FC<Props> = (props: Props) => {
   const setSeriesList = useSetRecoilState(seriesListState);
 
   return (
-    <>
-      <div className="fixed top-[29px] left-[205px] z-0">
-        {props.series.preview ? (
-          <Link to={routes.SEARCH}>
-            <Button size="sm">
-              <ArrowLeftIcon className="w-4 h-4" />
-              Back to search
+    <div className="sticky top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm border-b">
+      <div className="max-w-[1400px] mx-auto px-4 py-3 flex justify-between items-center">
+        <div>
+          {props.series.preview ? (
+            <Link to={routes.SEARCH}>
+              <Button size="sm" variant="ghost">
+                <ArrowLeftIcon className="w-4 h-4 mr-2" />
+                Back to Search
+              </Button>
+            </Link>
+          ) : (
+            <Link to={routes.LIBRARY}>
+              <Button size="sm" variant="ghost" onClick={() => setSeriesList(library.fetchSeriesList())}>
+                <ArrowLeftIcon className="w-4 h-4 mr-2" />
+                Back to Library
+              </Button>
+            </Link>
+          )}
+        </div>
+
+        {props.series.preview && (
+          <div>
+            <Button
+              className="bg-primary hover:bg-primary/90"
+              size="sm"
+              onClick={() => {
+                downloadCover(props.series);
+                library.upsertSeries({ ...props.series, preview: false });
+                setSeriesList(library.fetchSeriesList());
+              }}
+            >
+              <HeartIcon className="w-4 h-4 mr-2" />
+              Add to Library
             </Button>
-          </Link>
-        ) : (
-          <Link to={routes.LIBRARY}>
-            <Button size="sm" onClick={() => setSeriesList(library.fetchSeriesList())}>
-              <ArrowLeftIcon className="w-4 h-4" />
-              Back to library
-            </Button>
-          </Link>
+          </div>
         )}
       </div>
-
-      {props.series.preview && (
-        <div className="fixed top-[29px] right-[15px] z-0">
-          <Button
-            className="text-neutral-50 bg-emerald-600 hover:bg-emerald-700"
-            size="sm"
-            onClick={() => {
-              downloadCover(props.series);
-              library.upsertSeries({ ...props.series, preview: false });
-              setSeriesList(library.fetchSeriesList());
-            }}
-          >
-            <HeartIcon className="w-4 h-4" />
-            Add to library
-          </Button>
-        </div>
-      )}
-    </>
+    </div>
   );
 };
 

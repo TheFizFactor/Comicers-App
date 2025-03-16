@@ -41,23 +41,27 @@ const SeriesDetailsIntro: React.FC<Props> = (props: Props) => {
   };
 
   return (
-    <div className="flex">
-      <div className="max-w-[140px] md:max-w-[180px]">
+    <div className="flex gap-4 p-4">
+      <div className="w-[140px] md:w-[180px] flex-shrink-0">
         <ExtensionImage
           url={getThumbnailPath().replaceAll('\\', '/')}
           series={props.series}
           alt={props.series.title}
-          className="w-auto h-auto -mt-[70%] aspect-[70/100] object-cover rounded-sm"
+          className="w-full aspect-[70/100] object-cover rounded-lg shadow-md"
         />
       </div>
-      <div className="w-full py-2 px-2">
-        <div className="flex justify-between">
-          <h2 className="text-lg font-bold line-clamp-1">{props.series.title}</h2>
-          <Badge variant={'secondary'} className="cursor-default text-xs">
+      <div className="flex-1 min-w-0">
+        <div className="flex justify-between items-start gap-4 mb-3">
+          <h2 className="text-lg font-bold line-clamp-2">{props.series.title}</h2>
+          <Badge variant={'secondary'} className="cursor-default text-xs flex-shrink-0">
             {currentExtensionMetadata?.name}
           </Badge>
         </div>
-        <ScrollArea className="h-[60px] md:h-[90px]">{props.series.description}</ScrollArea>
+        <ScrollArea className="h-[90px]">
+          <p className="text-muted-foreground text-sm">
+            {props.series.description}
+          </p>
+        </ScrollArea>
       </div>
     </div>
   );

@@ -2,7 +2,7 @@ const fs = require('fs');
 import path from 'path';
 import React, { useEffect } from 'react';
 const { ipcRenderer } = require('electron');
-import { Series } from '@tiyo/common';
+import { Series, SeriesStatus } from '@tiyo/common';
 import { useRecoilState, useRecoilValue } from 'recoil';
 import { useNavigate } from 'react-router-dom';
 import blankCover from '@/renderer/img/blank_cover.png';
@@ -14,12 +14,9 @@ import {
 } from '@/renderer/state/libraryStates';
 import {
   libraryColumnsState,
-  libraryCropCoversState,
-  libraryViewState,
 } from '@/renderer/state/settingStates';
 import { goToSeries } from '@/renderer/features/library/utils';
 import ExtensionImage from '../general/ExtensionImage';
-import { LibraryView } from '@/common/models/types';
 import LibraryGridContextMenu from './LibraryGridContextMenu';
 import { FS_METADATA } from '@/common/temp_fs_metadata';
 import { ContextMenu, ContextMenuTrigger } from '@comicers/ui/components/ContextMenu';
@@ -38,9 +35,7 @@ type Props = {
 
 const LibraryGrid: React.FC<Props> = (props: Props) => {
   const navigate = useNavigate();
-  const libraryView = useRecoilValue(libraryViewState);
   const libraryColumns = useRecoilValue(libraryColumnsState);
-  const libraryCropCovers = useRecoilValue(libraryCropCoversState);
   const [multiSelectEnabled, setMultiSelectEnabled] = useRecoilState(multiSelectEnabledState);
   const [multiSelectSeriesList, setMultiSelectSeriesList] = useRecoilState(
     multiSelectSeriesListState,
@@ -83,7 +78,7 @@ const LibraryGrid: React.FC<Props> = (props: Props) => {
         libraryColumns === 4 && 'grid-cols-4',
         libraryColumns === 6 && 'grid-cols-6',
         libraryColumns === 8 && 'grid-cols-8',
-        `grid gap-2`,
+        `grid gap-4`,
       )}
     >
       {props.getFilteredList().map((series: Series) => {
@@ -91,11 +86,11 @@ const LibraryGrid: React.FC<Props> = (props: Props) => {
         const isMultiSelected = multiSelectSeriesList.includes(series);
 
         return (
-          <div key={`${series.id}-${series.title}`} className="space-y-2">
+          <div key={`${series.id}-${series.title}`}>
             <ContextMenu>
               <ContextMenuTrigger>
                 <div
-                  className="relative overflow-hidden cursor-pointer"
+                  className="group relative cursor-pointer"
                   onClick={() => {
                     if (multiSelectEnabled) {
                       if (isMultiSelected) {
@@ -108,36 +103,67 @@ const LibraryGrid: React.FC<Props> = (props: Props) => {
                     }
                   }}
                 >
-                  <ExtensionImage
-                    url={coverSource}
-                    series={series}
-                    alt={series.title}
-                    className={cn(
-                      !multiSelectEnabled && 'hover:scale-105',
-                      multiSelectEnabled && isMultiSelected && 'border-4 border-sky-500',
-                      libraryCropCovers && 'aspect-[70/100]',
-                      'h-auto w-full object-cover rounded-md transition-transform',
+                  {/* Cover Image Container */}
+                  <div className="relative overflow-hidden rounded-lg aspect-[70/100]">
+                    <ExtensionImage
+                      url={coverSource}
+                      series={series}
+                      alt={series.title}
+                      className={cn(
+                        !multiSelectEnabled && 'group-hover:scale-105',
+                        multiSelectEnabled && isMultiSelected && 'ring-4 ring-primary',
+                        'h-full w-full object-cover transition-all duration-200',
+                      )}
+                    />
+
+                    {/* Dark Overlay for Better Text Contrast */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-200" />
+
+                    {/* Unread Badge */}
+                    {series.numberUnread > 0 && (
+                      <div className="absolute top-2 right-2 bg-primary px-2 min-w-6 rounded-full font-medium text-primary-foreground text-center text-sm z-10">
+                        {series.numberUnread}
+                      </div>
                     )}
-                  />
 
-                  {series.numberUnread > 0 && (
-                    <div className="absolute top-0 right-0 bg-sky-500 px-1 mr-1 mt-1 min-w-5 rounded-md font-semibold text-white text-center">
-                      {series.numberUnread}
+                    {/* Status Badge */}
+                    <div className="absolute top-2 left-2 z-10">
+                      <div className={cn(
+                        "px-2 py-0.5 rounded-full text-xs font-medium text-white",
+                        series.status === SeriesStatus.COMPLETED && "bg-green-500/90",
+                        series.status === SeriesStatus.ONGOING && "bg-blue-500/90",
+                        series.status === SeriesStatus.CANCELLED && "bg-red-500/90",
+                        "bg-gray-500/90"
+                      )}>
+                        {series.status || 'Unknown'}
+                      </div>
                     </div>
-                  )}
 
-                  {libraryView === LibraryView.GridCompact && (
-                    <div
-                      className="absolute bottom-0 left-0 right-0 p-2 flex items-end"
-                      style={{
-                        textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 0, 0, 0.5)',
-                      }}
-                    >
-                      <span className="line-clamp-3 text-white text-xs font-bold">
-                        {series.title}
-                      </span>
+                    {/* Hover Overlay with Title and Info */}
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-200 p-4 flex flex-col justify-end z-20">
+                      <div className="space-y-2">
+                        <div>
+                          <h3 className="text-white font-bold text-sm line-clamp-2">
+                            {series.title}
+                          </h3>
+                          {series.authors && series.authors.length > 0 && (
+                            <p className="text-white/80 text-xs line-clamp-1 mt-0.5">
+                              by {series.authors.join(', ')}
+                            </p>
+                          )}
+                        </div>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            viewFunc(series);
+                          }}
+                          className="w-full bg-white/90 hover:bg-white text-black text-xs font-medium py-1.5 px-3 rounded-md transition-colors"
+                        >
+                          View Details
+                        </button>
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               </ContextMenuTrigger>
               <LibraryGridContextMenu
@@ -146,12 +172,6 @@ const LibraryGrid: React.FC<Props> = (props: Props) => {
                 removeActionText={props.contextMenuRemoveAction}
               />
             </ContextMenu>
-
-            {libraryView === LibraryView.GridComfortable && (
-              <div className="space-y-1 text-sm pb-3">
-                <h3 className="font-medium leading-none line-clamp-3">{series.title}</h3>
-              </div>
-            )}
           </div>
         );
       })}

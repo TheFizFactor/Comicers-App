@@ -4,7 +4,7 @@ const { ipcRenderer } = require('electron');
 import { Series } from '@tiyo/common';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import ipcChannels from '@/common/constants/ipcChannels.json';
-import { libraryColumnsState, libraryCropCoversState } from '@/renderer/state/settingStates';
+import { libraryColumnsState } from '@/renderer/state/settingStates';
 import {
   searchResultState,
   addModalEditableState,
@@ -18,6 +18,9 @@ import { Skeleton } from '@comicers/ui/components/Skeleton';
 import { ScrollArea } from '@comicers/ui/components/ScrollArea';
 import { Badge } from '@comicers/ui/components/Badge';
 import { motion } from 'framer-motion';
+import { ContextMenu, ContextMenuTrigger } from '@comicers/ui/components/ContextMenu';
+import SearchGridContextMenu from './SearchGridContextMenu';
+import ExtensionImage from '../general/ExtensionImage';
 
 const thumbnailsDir = await ipcRenderer.invoke(ipcChannels.GET_PATH.THUMBNAILS_DIR);
 if (!fs.existsSync(thumbnailsDir)) {
@@ -33,7 +36,6 @@ const SearchGrid: React.FC<Props> = (props: Props): JSX.Element => {
   const viewportRef = useRef<HTMLDivElement>(null);
   const searchResult = useRecoilValue(searchResultState);
   const libraryColumns = useRecoilValue(libraryColumnsState);
-  const libraryCropCovers = useRecoilValue(libraryCropCoversState);
   const searchExtension = useRecoilValue(searchExtensionState);
   const setAddModalSeries = useSetRecoilState(addModalSeriesState);
   const setAddModalEditable = useSetRecoilState(addModalEditableState);
@@ -54,62 +56,74 @@ const SearchGrid: React.FC<Props> = (props: Props): JSX.Element => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: i * 0.05 }}
-          className="group relative cursor-pointer"
-          onClick={() => handleOpenAddModal(series)}
         >
-          <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-muted/30">
-            <img
-              src={series.remoteCoverUrl}
-              alt={series.title}
-              className={cn(
-                'h-full w-full transition-all duration-300',
-                'hover:scale-105 hover:brightness-110',
-                libraryCropCovers ? 'object-cover' : 'object-contain',
-              )}
-              loading="lazy"
-            />
-            {seriesWithProvider.provider && (
-              <Badge 
-                variant="secondary" 
-                className="absolute top-2 right-2 bg-black/60 text-white border-none"
+          <ContextMenu>
+            <ContextMenuTrigger>
+              <div
+                className="group relative cursor-pointer"
+                onClick={() => handleOpenAddModal(series)}
               >
-                {seriesWithProvider.provider}
-              </Badge>
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          </div>
-          <div className="mt-3 space-y-1">
-            <h3 className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">
-              {series.title}
-            </h3>
-            {series.description && (
-              <p className="text-xs text-muted-foreground line-clamp-2">
-                {series.description}
-              </p>
-            )}
-          </div>
+                {/* Cover Image Container */}
+                <div className="relative overflow-hidden rounded-lg aspect-[70/100]">
+                  <ExtensionImage
+                    url={series.remoteCoverUrl}
+                    series={series}
+                    alt={series.title}
+                    className="h-full w-full object-cover transition-all duration-200 group-hover:scale-105"
+                  />
+
+                  {/* Dark Overlay for Better Text Contrast */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-200" />
+
+                  {/* Provider Badge */}
+                  <div className="absolute top-2 left-2 z-10">
+                    <Badge 
+                      variant="secondary" 
+                      className="bg-black/60 text-white border-none text-xs"
+                    >
+                      {seriesWithProvider.provider || 'Unknown'}
+                    </Badge>
+                  </div>
+
+                  {/* Hover Overlay with Title and Info */}
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-200 p-4 flex flex-col justify-end z-20">
+                    <div className="space-y-2">
+                      <div>
+                        <h3 className="text-white font-bold text-sm line-clamp-2">
+                          {series.title}
+                        </h3>
+                        {series.authors && series.authors.length > 0 && (
+                          <p className="text-white/80 text-xs line-clamp-1 mt-0.5">
+                            by {series.authors.join(', ')}
+                          </p>
+                        )}
+                      </div>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenAddModal(series);
+                        }}
+                        className="w-full bg-white/90 hover:bg-white text-black text-xs font-medium py-1.5 px-3 rounded-md transition-colors"
+                      >
+                        View Details
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ContextMenuTrigger>
+            <SearchGridContextMenu series={series} viewDetails={() => handleOpenAddModal(series)} />
+          </ContextMenu>
         </motion.div>
       );
     });
 
-  const renderLoadingSkeleton = () => {
-    const skeletonCount = libraryColumns * 2;
-    return Array.from({ length: skeletonCount }).map((_, i) => (
-      <motion.div
-        key={i}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: i * 0.05 }}
-        className="space-y-3"
-      >
-        <Skeleton className="aspect-[2/3] w-full rounded-lg" />
-        <div className="space-y-2">
-          <Skeleton className="h-4 w-[80%]" />
-          <Skeleton className="h-3 w-[60%]" />
-        </div>
-      </motion.div>
+  const renderLoadingSkeleton = (): JSX.Element[] =>
+    Array.from({ length: 12 }).map((_, i) => (
+      <div key={i} className="space-y-2">
+        <Skeleton className="aspect-[70/100] w-full rounded-lg" />
+      </div>
     ));
-  };
 
   useEffect(() => {
     const viewport = viewportRef.current;
@@ -149,7 +163,7 @@ const SearchGrid: React.FC<Props> = (props: Props): JSX.Element => {
     >
       <div
         className={cn(
-          'grid gap-6',
+          'grid gap-4',
           libraryColumns === 2 && 'grid-cols-2',
           libraryColumns === 4 && 'grid-cols-4',
           libraryColumns === 6 && 'grid-cols-6',

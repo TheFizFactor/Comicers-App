@@ -11,21 +11,23 @@ export const SettingsIntegrations: React.FC = () => {
 
   return (
     <>
-      <div className="flex flex-col space-y-2">
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="checkboxDiscordPresence"
-            checked={discordPresenceEnabled}
-            onCheckedChange={(checked) => setDiscordPresenceEnabled(checked === true)}
-          />
-          <Label htmlFor="checkboxDiscordPresence" className="font-normal">
-            Use Discord Rich Presence
-          </Label>
+      <div className="flex flex-col space-y-6">
+        <div className="flex flex-col space-y-2">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="checkboxDiscordPresence"
+              checked={discordPresenceEnabled}
+              onCheckedChange={(checked) => setDiscordPresenceEnabled(!!checked)}
+            />
+            <Label htmlFor="checkboxDiscordPresence" className="font-normal">
+              Use Discord Rich Presence
+            </Label>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            To use Discord Rich Presence, make sure "Share your detected activities with others" is
+            enabled in your Discord settings (under the Activity Privacy tab).
+          </p>
         </div>
-        <p className="text-xs text-muted-foreground">
-          To use Discord Rich Presence, make sure "Share your detected activities with others" is
-          enabled in your Discord settings (under the Activity Privacy tab).
-        </p>
       </div>
     </>
   );

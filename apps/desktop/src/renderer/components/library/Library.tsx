@@ -49,6 +49,11 @@ const Library: React.FC<Props> = () => {
   const setReadingLists = useSetRecoilState(readingListsState);
   const activeReadingList = useRecoilValue(activeReadingListState);
 
+  const showRemoveModal = (series: Series) => {
+    setRemoveModalSeries(series);
+    setRemoveModalShowing(true);
+  };
+
   useEffect(() => {
     setSeries(undefined);
     setChapterList([]);
@@ -113,72 +118,46 @@ const Library: React.FC<Props> = () => {
     }
   };
 
-  const renderLibrary = () => {
-    return (
-      <>
-        <RemoveSeriesDialog
-          series={removeModalSeries}
-          showing={removeModalShowing}
-          setShowing={setRemoveModalShowing}
-        />
+  const renderEmptyMessage = () => (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <p className="text-lg font-medium text-muted-foreground">Your library is empty</p>
+      <p className="text-sm text-muted-foreground/80 mt-1">Add some series to get started</p>
+    </div>
+  );
 
-        {libraryView === LibraryView.List ? (
-          <LibraryList
-            getFilteredList={getFilteredList}
-            showRemoveModal={(series) => {
-              setRemoveModalSeries(series);
-              setRemoveModalShowing(true);
-            }}
-          />
-        ) : (
-          <LibraryGrid
-            getFilteredList={getFilteredList}
-            showRemoveModal={(series) => {
-              setRemoveModalSeries(series);
-              setRemoveModalShowing(true);
-            }}
-          />
-        )}
-      </>
-    );
-  };
+  const renderNoneMatchMessage = () => (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <p className="text-lg font-medium text-muted-foreground">No series match your filter</p>
+      <p className="text-sm text-muted-foreground/80 mt-1">Try adjusting your search criteria</p>
+    </div>
+  );
 
-  const renderEmptyMessage = () => {
-    return (
-      <div className="flex items-center justify-center pt-[30vh]">
-        <div className="max-w-[460px]">
-          <p className="text-center">
-            Your library is empty. Install{' '}
-            <code className="relative bg-muted px-[0.3rem] py-[0.2rem] text-sm font-semibold">
-              Plugins
-            </code>{' '}
-            from the tab on the left, and then go to{' '}
-            <code className="relative bg-muted px-[0.3rem] py-[0.2rem] text-sm font-semibold">
-              Explorer
-            </code>{' '}
-            to start building your library.
+  const renderLibrary = () => (
+    <>
+      {activeSeriesList.length > 0 && (
+        <div className="mb-4 text-center">
+          <p className="text-sm text-muted-foreground/80">
+            Pro tip: Right-click on any series to access quick actions
           </p>
         </div>
-      </div>
-    );
-  };
-
-  const renderNoneMatchMessage = () => {
-    return (
-      <div className="flex items-center justify-center pt-[30vh]">
-        <div className="max-w-[500px]">
-          <p className="text-center">
-            There are no series in your library which match the current filters.
-          </p>
-        </div>
-      </div>
-    );
-  };
+      )}
+      {libraryView === LibraryView.List ? (
+        <LibraryList getFilteredList={getFilteredList} showRemoveModal={showRemoveModal} />
+      ) : (
+        <LibraryGrid getFilteredList={getFilteredList} showRemoveModal={showRemoveModal} />
+      )}
+      <RemoveSeriesDialog
+        series={removeModalSeries}
+        showing={removeModalShowing}
+        setShowing={setRemoveModalShowing}
+      />
+    </>
+  );
 
   useEffect(() => setSeriesList(library.fetchSeriesList()), [setSeriesList]);
 
   return (
-    <div>
+    <div className="h-screen">
       {!activeReadingList && (
         <>
           {multiSelectEnabled ? (
@@ -188,10 +167,12 @@ const Library: React.FC<Props> = () => {
           ) : (
             <LibraryControlBar getFilteredList={getFilteredList} />
           )}
-          <ScrollArea className="h-[calc(100vh-20px-64px)] w-full pr-4 -mr-2">
-            {activeSeriesList.length === 0 && renderEmptyMessage()}
-            {activeSeriesList.length > 0 && getFilteredList().length === 0 && renderNoneMatchMessage()}
-            {activeSeriesList.length > 0 && getFilteredList().length > 0 && renderLibrary()}
+          <ScrollArea className="h-[calc(100vh-64px-56px)] w-full">
+            <div className="px-4 pb-4">
+              {activeSeriesList.length === 0 && renderEmptyMessage()}
+              {activeSeriesList.length > 0 && getFilteredList().length === 0 && renderNoneMatchMessage()}
+              {activeSeriesList.length > 0 && getFilteredList().length > 0 && renderLibrary()}
+            </div>
           </ScrollArea>
         </>
       )}

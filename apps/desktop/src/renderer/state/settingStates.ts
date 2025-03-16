@@ -30,7 +30,7 @@ function atm<T>(
 ): RecoilState<T> {
   const atomKey = `setting${setting}`;
   const defaultValue: T =
-    storedSettings[setting] === undefined ? DefaultSettings[setting] : storedSettings[setting];
+    storedSettings[setting] === undefined ? (DefaultSettings as any)[setting] : (storedSettings as any)[setting];
   const effects: AtomEffect<T>[] = [
     ({ onSet }) => {
       onSet((value) => {
@@ -108,3 +108,9 @@ export const optimizeContrastState = atm<boolean>(ReaderSetting.OptimizeContrast
 export const trackerAutoUpdateState = atm<boolean>(TrackerSetting.TrackerAutoUpdate);
 
 export const discordPresenceEnabledState = atm<boolean>(IntegrationSetting.DiscordPresenceEnabled);
+export const experimentalFeaturesEnabledState = atm<boolean>(IntegrationSetting.ExperimentalFeaturesEnabled);
+export const aiEnhancedReadingState = atm<boolean>(IntegrationSetting.AIEnhancedReading);
+export const realtimeCollaborationState = atm<boolean>(IntegrationSetting.RealtimeCollaboration);
+export const advancedPanelDetectionState = atm<boolean>(IntegrationSetting.AdvancedPanelDetection);
+export const smartLibraryOrganizationState = atm<boolean>(IntegrationSetting.SmartLibraryOrganization);
+export const pwaModeState = atm<boolean>(IntegrationSetting.PWAMode);

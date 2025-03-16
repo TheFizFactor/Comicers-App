@@ -7,7 +7,7 @@ import {
   NotebookTextIcon,
   SettingsIcon,
   ToyBrickIcon,
-  BarChartIcon,
+  FlaskConicalIcon,
 } from 'lucide-react';
 
 import {
@@ -18,7 +18,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@comicers/ui/components/Breadcrumb';
-import { DialogContent, DialogTitle } from '@comicers/ui/components/Dialog';
+import { DialogContent, DialogTitle, DialogDescription } from '@comicers/ui/components/Dialog';
 import {
   Sidebar,
   SidebarContent,
@@ -36,16 +36,16 @@ import { SettingsReader } from './SettingsReader';
 import { SettingsKeybinds } from './SettingsKeybinds';
 import { SettingsIntegrations } from './SettingsIntegrations';
 import { SettingsTrackers } from './SettingsTrackers';
-import { SettingsStats } from './SettingsStats';
+import { SettingsExperimental } from './SettingsExperimental';
 
 export enum SettingsPage {
-  Stats = 'Stats',
   General = 'General',
   Library = 'Library',
   Reader = 'Reader',
   Keybinds = 'Keybinds',
   Trackers = 'Trackers',
   Integrations = 'Integrations',
+  Experimental = 'Experimental',
 }
 
 type SettingsPageProps = {
@@ -57,7 +57,6 @@ type SettingsPageProps = {
 };
 
 const PAGES: { [key in SettingsPage]: SettingsPageProps } = {
-  [SettingsPage.Stats]: { name: 'Stats', icon: BarChartIcon, component: SettingsStats },
   [SettingsPage.General]: { name: 'General', icon: SettingsIcon, component: SettingsGeneral },
   [SettingsPage.Library]: { name: 'Library', icon: LibraryBigIcon, component: SettingsLibrary },
   [SettingsPage.Reader]: { name: 'Reader', icon: BookOpenIcon, component: SettingsReader },
@@ -71,6 +70,11 @@ const PAGES: { [key in SettingsPage]: SettingsPageProps } = {
     name: 'Integrations',
     icon: ToyBrickIcon,
     component: SettingsIntegrations,
+  },
+  [SettingsPage.Experimental]: {
+    name: 'Experimental',
+    icon: FlaskConicalIcon,
+    component: SettingsExperimental,
   },
 };
 
@@ -86,6 +90,9 @@ export function SettingsDialogContent(props: SettingsDialogContentProps) {
   return (
     <DialogContent className="overflow-hidden !p-0 md:max-h-[500px] md:max-w-[700px] lg:max-w-[800px] text-foreground">
       <DialogTitle className="sr-only">Settings</DialogTitle>
+      <DialogDescription className="sr-only">
+        Configure application settings and preferences
+      </DialogDescription>
       <SidebarProvider className="items-start">
         <Sidebar collapsible="none">
           <SidebarContent>

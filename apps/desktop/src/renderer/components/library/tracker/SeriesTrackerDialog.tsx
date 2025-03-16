@@ -180,10 +180,10 @@ export const SeriesTrackerDialog: React.FC<Props> = (props: Props) => {
         props.setShowing(open);
       }}
     >
-      <DialogContent className="overflow-hidden !p-0 md:max-h-[400px] md:max-w-[700px] lg:max-w-[800px] text-foreground">
+      <DialogContent className="overflow-hidden !p-0 max-h-[90vh] md:max-h-[600px] md:max-w-[700px] lg:max-w-[800px] text-foreground">
         <DialogTitle className="sr-only">Trackers</DialogTitle>
         <SidebarProvider className="items-start">
-          <Sidebar collapsible="none">
+          <Sidebar collapsible="none" className="border-r">
             <SidebarContent>
               <SidebarGroup>
                 <SidebarGroupContent>
@@ -193,6 +193,7 @@ export const SeriesTrackerDialog: React.FC<Props> = (props: Props) => {
                         <SidebarMenuButton
                           isActive={page === activePage}
                           onClick={() => uploadTrackEntry().then(() => setActivePage(page))}
+                          className="w-full px-4 py-2 text-sm font-medium"
                         >
                           <span>{page}</span>
                         </SidebarMenuButton>
@@ -203,24 +204,43 @@ export const SeriesTrackerDialog: React.FC<Props> = (props: Props) => {
               </SidebarGroup>
             </SidebarContent>
           </Sidebar>
-          <main className="flex h-[480px] flex-1 flex-col overflow-hidden">
-            <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-              <div className="flex items-center gap-2 px-4">
-                <Breadcrumb>
-                  <BreadcrumbList>
-                    <BreadcrumbItem className="hidden md:block">
-                      <BreadcrumbLink>Trackers</BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator className="hidden md:block" />
-                    <BreadcrumbItem>
-                      <BreadcrumbPage>{activePage}</BreadcrumbPage>
-                    </BreadcrumbItem>
-                  </BreadcrumbList>
-                </Breadcrumb>
-              </div>
+          <main className="flex h-[600px] flex-1 flex-col overflow-hidden">
+            <header className="flex h-14 shrink-0 items-center border-b px-4">
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem className="hidden md:block">
+                    <BreadcrumbLink className="text-muted-foreground">Trackers</BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator className="hidden md:block" />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage className="font-medium">{activePage}</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
             </header>
-            <div className="flex flex-1 flex-col gap-2 overflow-y-auto p-4 pt-0 space-y-2">
-              {renderPage()}
+            <div className="flex-1 overflow-y-auto p-6">
+              {loading ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-10 w-full" />
+                  <div className="space-y-3">
+                    {[0, 1, 2].map((i) => (
+                      <Skeleton key={i} className="h-[160px] w-full rounded-lg" />
+                    ))}
+                  </div>
+                </div>
+              ) : !username ? (
+                <div className="flex flex-col items-center justify-center h-full text-center p-6">
+                  <p className="text-lg font-medium mb-2">Account Required</p>
+                  <p className="text-muted-foreground">
+                    To track this series, please link your {TRACKER_PAGE_METADATA[activePage].name} account in{' '}
+                    <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">
+                      Settings
+                    </code>
+                  </p>
+                </div>
+              ) : (
+                renderPage()
+              )}
             </div>
           </main>
         </SidebarProvider>

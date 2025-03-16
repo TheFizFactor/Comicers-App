@@ -81,7 +81,7 @@ const SeriesDetails: React.FC<Props> = () => {
     );
   }
   return (
-    <div className="pb-4">
+    <div className="min-h-screen">
       <>
         <SeriesTrackerDialog
           series={series}
@@ -116,19 +116,21 @@ const SeriesDetails: React.FC<Props> = () => {
 
         <SeriesDetailsFloatingHeader series={series} />
 
-        <SeriesDetailsBanner
-          series={series}
-          showDownloadModal={() => setShowingDownloadModal(true)}
-          showEditModal={() => setShowingEditModal(true)}
-          showTrackerModal={() => setShowingTrackerModal(true)}
-          showRemoveModal={() => setShowingRemoveModal(true)}
-        />
+        <div className="pb-4">
+          <SeriesDetailsBanner
+            series={series}
+            showDownloadModal={() => setShowingDownloadModal(true)}
+            showEditModal={() => setShowingEditModal(true)}
+            showTrackerModal={() => setShowingTrackerModal(true)}
+            showRemoveModal={() => setShowingRemoveModal(true)}
+          />
 
-        <SeriesDetailsIntro series={series} />
-
-        <SeriesDetailsInfoGrid series={series} />
-
-        <ChapterTable series={series} />
+          <div className="max-w-[1400px] mx-auto px-4">
+            <SeriesDetailsIntro series={series} />
+            <SeriesDetailsInfoGrid series={series} />
+            <ChapterTable series={series} />
+          </div>
+        </div>
       </>
     </div>
   );

@@ -165,6 +165,12 @@ export enum TrackerSetting {
 
 export enum IntegrationSetting {
   DiscordPresenceEnabled = 'DiscordPresenceEnabled',
+  ExperimentalFeaturesEnabled = 'ExperimentalFeaturesEnabled',
+  AIEnhancedReading = 'AIEnhancedReading',
+  RealtimeCollaboration = 'RealtimeCollaboration',
+  AdvancedPanelDetection = 'AdvancedPanelDetection',
+  SmartLibraryOrganization = 'SmartLibraryOrganization',
+  PWAMode = 'PWAMode',
 }
 
 export enum ApplicationTheme {
@@ -250,6 +256,12 @@ export const SettingTypes = {
   [TrackerSetting.TrackerAutoUpdate]: SettingType.BOOLEAN,
 
   [IntegrationSetting.DiscordPresenceEnabled]: SettingType.BOOLEAN,
+  [IntegrationSetting.ExperimentalFeaturesEnabled]: SettingType.BOOLEAN,
+  [IntegrationSetting.AIEnhancedReading]: SettingType.BOOLEAN,
+  [IntegrationSetting.RealtimeCollaboration]: SettingType.BOOLEAN,
+  [IntegrationSetting.AdvancedPanelDetection]: SettingType.BOOLEAN,
+  [IntegrationSetting.SmartLibraryOrganization]: SettingType.BOOLEAN,
+  [IntegrationSetting.PWAMode]: SettingType.BOOLEAN,
 };
 
 export const DefaultSettings = {
@@ -303,4 +315,10 @@ export const DefaultSettings = {
   [TrackerSetting.TrackerAutoUpdate]: true,
 
   [IntegrationSetting.DiscordPresenceEnabled]: false,
+  [IntegrationSetting.ExperimentalFeaturesEnabled]: false,
+  [IntegrationSetting.AIEnhancedReading]: false,
+  [IntegrationSetting.RealtimeCollaboration]: false,
+  [IntegrationSetting.AdvancedPanelDetection]: false,
+  [IntegrationSetting.SmartLibraryOrganization]: false,
+  [IntegrationSetting.PWAMode]: false,
 };
