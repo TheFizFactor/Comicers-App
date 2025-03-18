@@ -8,8 +8,8 @@ import ReaderPage from './components/reader/ReaderPage';
 import ipcChannels from '@/common/constants/ipcChannels.json';
 import { migrateSeriesTags } from './features/library/utils';
 import AppLoading from './components/general/AppLoading';
-import { Toaster } from '@comicers/ui/components/Toaster';
-import { toast } from '@comicers/ui/hooks/use-toast';
+import { Toaster } from '@/components/ui/Toaster';
+import { toast } from '@/components/ui/use-toast';
 import { categoryListState, seriesListState, titlebarTextState } from './state/libraryStates';
 import { downloaderClient } from './services/downloader';
 import {
@@ -34,20 +34,20 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@comicers/ui/components/AlertDialog';
+} from '@/components/ui/AlertDialog';
 import { UpdateInfo } from 'electron-updater';
 import { useNetworkStatus } from './hooks/useNetworkStatus';
-import { Alert, AlertDescription } from '@comicers/ui/components/Alert';
+import { Alert, AlertDescription } from '@/components/ui/Alert';
 import { WifiOffIcon, Loader2Icon, ClockIcon } from 'lucide-react';
-import { Progress } from '@comicers/ui/components/Progress';
-import { ScrollArea } from '@comicers/ui/components/ScrollArea';
+import { Progress } from '@/components/ui/Progress';
+import { ScrollArea } from '@/components/ui/ScrollArea';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@comicers/ui/components/Select';
+} from '@/components/ui/Select';
 import { SettingsConfig } from './components/settings/SettingsConfig';
 
 loadStoredExtensionSettings();
