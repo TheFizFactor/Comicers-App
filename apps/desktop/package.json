@@ -54,7 +54,18 @@
     },
     "linux": {
       "target": ["AppImage", "deb", "rpm"],
-      "category": "Entertainment"
+      "category": "Entertainment",
+      "executableName": "comicers",
+      "desktop": {
+        "Name": "Comicers",
+        "Comment": "Manga reader and library manager",
+        "Categories": "Graphics;Viewer;Entertainment",
+        "MimeType": "application/x-cbr;application/x-cbz;application/x-rar;application/zip;application/x-7z-compressed"
+      },
+      "artifactName": "${productName}-${version}.${ext}",
+      "deb": {
+        "depends": ["libgtk-3-0", "libnotify4", "libnss3", "libxss1", "libxtst6", "xdg-utils"]
+      }
     },
     "publish": {
       "provider": "github",
