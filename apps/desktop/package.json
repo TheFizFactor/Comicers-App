@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
-    "build:ui": "cd ../../packages/ui && pnpm build",
+    "build:ui": "cd ../../packages/ui && pnpm build && mkdir -p ../desktop/resources/ui/dist && cp -r dist/* ../desktop/resources/ui/dist/",
     "preview": "electron-vite preview",
     "lint": "biome lint src",
     "dist:win": "pnpm run build:ui && cross-env ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES=1 npm_config_build_from_source=false npm_config_msvs_version=2022 pnpm electron-builder --publish onTagOrDraft --win",
@@ -20,6 +20,8 @@
     "appId": "org.comicers.desktop",
     "files": [
       "dist/**/*",
+      "out/**/*",
+      "resources/**/*",
       "node_modules/**/*",
       "!**/.turbo/**/*",
       "!**/node_modules/.turbo/**/*"
@@ -30,20 +32,8 @@
       "buildResources": "resources",
       "output": "dist"
     },
-    "extraFiles": [
-      {
-        "from": "../../packages/ui/dist",
-        "to": "./resources/ui/dist",
-        "filter": ["**/*"]
-      }
-    ],
-    "extraResources": [
-      {
-        "from": "../../packages/ui/dist",
-        "to": "ui/dist",
-        "filter": ["**/*"]
-      }
-    ],
+    "extraFiles": [],
+    "extraResources": [],
     "nodeGypRebuild": false,
     "mac": {
       "target": ["dmg"],
@@ -67,14 +57,7 @@
       "maintainer": "Arnis <fiz@comicers.com>",
       "vendor": "Comicers",
       "description": "Manga reader and library manager for the desktop",
-      "synopsis": "Manga reader and library manager",
-      "extraResources": [
-        {
-          "from": "../../packages/ui/dist",
-          "to": "ui/dist",
-          "filter": ["**/*"]
-        }
-      ]
+      "synopsis": "Manga reader and library manager"
     },
     "publish": {
       "provider": "github",
