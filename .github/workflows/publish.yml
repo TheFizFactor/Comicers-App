@@ -1,5 +1,12 @@
 # Publish workflow - Creates draft releases for all builds
 name: Publish
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  packages: write
+  pages: write
+  id-token: write
 on:
   push:
     branches:
@@ -24,6 +31,11 @@ jobs:
       - run: pnpm dist:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload Windows build
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build
+          path: apps/desktop/dist/win
 
   publish-linux:
     strategy:
@@ -58,6 +70,11 @@ jobs:
       - run: pnpm dist:linux
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload Linux build
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-build
+          path: apps/desktop/dist/linux
 
   publish-mac:
     strategy:
@@ -82,6 +99,11 @@ jobs:
           # APPLE_ID_PASS: ${{ secrets.APPLE_ID_PASS }}
           # CSC_LINK: ${{ secrets.CSC_LINK }}
           # CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+      - name: Upload macOS build
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-build
+          path: apps/desktop/dist/mac
 
   create-release:
     needs: [publish-win, publish-linux, publish-mac]
@@ -107,6 +129,24 @@ jobs:
             echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
           fi
 
+      - name: Download Windows build
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-build
+          path: dist/win
+
+      - name: Download Linux build
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-build
+          path: dist/linux
+
+      - name: Download macOS build
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-build
+          path: dist/mac
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
@@ -115,6 +155,10 @@ jobs:
           name: Release ${{ steps.tag.outputs.tag }}
           generate_release_notes: true
           prerelease: false
+          files: |
+            dist/win/**/*
+            dist/linux/**/*
+            dist/mac/**/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
