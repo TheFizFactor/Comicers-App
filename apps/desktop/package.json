@@ -9,11 +9,12 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "build:ui": "cd ../../packages/ui && pnpm build && mkdir -p ../desktop/resources/ui/dist && cp -r dist/* ../desktop/resources/ui/dist/",
+    "prepare-dist": "pnpm run build && pnpm run build:ui",
     "preview": "electron-vite preview",
     "lint": "biome lint src",
-    "dist:win": "pnpm run build:ui && cross-env ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES=1 npm_config_build_from_source=false npm_config_msvs_version=2022 pnpm electron-builder --publish onTagOrDraft --win",
-    "dist:mac": "pnpm run build:ui && pnpm electron-builder --publish onTagOrDraft --mac",
-    "dist:linux": "pnpm run build:ui && pnpm electron-builder --publish onTagOrDraft --linux"
+    "dist:win": "pnpm run prepare-dist && cross-env ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES=1 npm_config_build_from_source=false npm_config_msvs_version=2022 pnpm electron-builder --config.nodeModulesPath=false --publish onTagOrDraft --win",
+    "dist:mac": "pnpm run prepare-dist && pnpm electron-builder --config.nodeModulesPath=false --publish onTagOrDraft --mac",
+    "dist:linux": "pnpm run prepare-dist && pnpm electron-builder --config.nodeModulesPath=false --publish onTagOrDraft --linux"
   },
   "build": {
     "productName": "Comicers",
@@ -22,9 +23,7 @@
       "dist/**/*",
       "out/**/*",
       "resources/**/*",
-      "node_modules/**/*",
-      "!**/.turbo/**/*",
-      "!**/node_modules/.turbo/**/*"
+      "package.json"
     ],
     "asar": true,
     "asarUnpack": ["**/*.node"],
@@ -32,8 +31,6 @@
       "buildResources": "resources",
       "output": "dist"
     },
-    "extraFiles": [],
-    "extraResources": [],
     "nodeGypRebuild": false,
     "mac": {
       "target": ["dmg"],
