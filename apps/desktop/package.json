@@ -63,9 +63,7 @@
         "MimeType": "application/x-cbr;application/x-cbz;application/x-rar;application/zip;application/x-7z-compressed"
       },
       "artifactName": "${productName}-${version}.${ext}",
-      "deb": {
-        "depends": ["libgtk-3-0", "libnotify4", "libnss3", "libxss1", "libxtst6", "xdg-utils"]
-      }
+      "depends": ["libgtk-3-0", "libnotify4", "libnss3", "libxss1", "libxtst6", "xdg-utils"]
     },
     "publish": {
       "provider": "github",
