@@ -10,10 +10,11 @@ import { reloadSeriesList } from '@/renderer/features/library/utils';
 import { chapterLanguagesState } from '@/renderer/state/settingStates';
 import { Button } from '@comicers/ui/components/Button';
 import { SeriesDetailsBannerBackground } from './SeriesDetailsBannerBackground';
-import { Download, Edit, Loader2, RefreshCw, Target } from 'lucide-react';
+import { Download, Edit, Loader2, RefreshCw, Target, Heart } from 'lucide-react';
 import { FS_METADATA } from '@/common/temp_fs_metadata';
 import { cn } from '@comicers/ui/util';
 import ExtensionImage from '../../general/ExtensionImage';
+import { userPreferencesService } from '@/renderer/services/userPreferences';
 
 type SeriesDetailsBannerProps = {
   series: Series;
@@ -33,12 +34,30 @@ const SeriesDetailsBanner: React.FC<SeriesDetailsBannerProps> = (
   const setSeriesList = useSetRecoilState(seriesListState);
   const [reloadingSeriesList, setReloadingSeriesList] = useRecoilState(reloadingSeriesListState);
   const chapterLanguages = useRecoilValue(chapterLanguagesState);
+  const [isFavorite, setIsFavorite] = React.useState(false);
+
+  React.useEffect(() => {
+    if (props.series.id) {
+      setIsFavorite(userPreferencesService.isFavorite(props.series.id));
+    }
+  }, [props.series.id]);
 
   const handleRefresh = () => {
     if (series !== undefined && !reloadingSeriesList)
       reloadSeriesList([series], setSeriesList, setReloadingSeriesList, chapterLanguages).catch(
         (e) => console.error(e),
       );
+  };
+
+  const handleFavoriteClick = () => {
+    if (props.series.id) {
+      if (isFavorite) {
+        userPreferencesService.removeFromFavorites(props.series.id);
+      } else {
+        userPreferencesService.addToFavorites(props.series.id);
+      }
+      setIsFavorite(!isFavorite);
+    }
   };
 
   return (
@@ -63,12 +82,25 @@ const SeriesDetailsBanner: React.FC<SeriesDetailsBannerProps> = (
 
               {/* Series Info */}
               <div className="flex-1 text-white relative z-10 min-w-0">
-                <h1 className="text-3xl font-bold mb-2 line-clamp-2">{props.series.title}</h1>
-                {props.series.authors && props.series.authors.length > 0 && (
-                  <p className="text-white/80 mb-4 line-clamp-1">
-                    by {props.series.authors.join(', ')}
-                  </p>
-                )}
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h1 className="text-3xl font-bold mb-2 line-clamp-2">{props.series.title}</h1>
+                    {props.series.authors && props.series.authors.length > 0 && (
+                      <p className="text-white/80 mb-4 line-clamp-1">
+                        by {props.series.authors.join(', ')}
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    variant={isFavorite ? "destructive" : "secondary"}
+                    size="sm"
+                    className="flex-shrink-0"
+                    onClick={handleFavoriteClick}
+                  >
+                    <Heart className={`w-4 h-4 mr-2 ${isFavorite ? 'fill-current' : ''}`} />
+                    {isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                  </Button>
+                </div>
                 
                 {/* Quick Stats */}
                 <div className="flex gap-4 mb-4 flex-wrap">

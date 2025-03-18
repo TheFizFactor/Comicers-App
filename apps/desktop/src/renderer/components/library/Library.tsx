@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Series } from '@tiyo/common';
+import { useLocation } from 'react-router-dom';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
-import LibraryControlBar from './LibraryControlBar';
 import { LibrarySort, LibraryView, ProgressFilter } from '@/common/models/types';
 import {
   activeSeriesListState,
@@ -17,17 +17,20 @@ import {
 import {
   libraryFilterStatusState,
   libraryFilterProgressState,
-  librarySortState,
   libraryViewState,
+  librarySortState,
   libraryFilterCategoryState,
 } from '@/renderer/state/settingStates';
 import LibraryGrid from './LibraryGrid';
 import LibraryList from './LibraryList';
 import library from '@/renderer/services/library';
+import LibraryControlBar from './LibraryControlBar';
 import LibraryControlBarMultiSelect from './LibraryControlBarMultiSelect';
 import { ScrollArea } from '@comicers/ui/components/ScrollArea';
 import { RemoveSeriesDialog } from './RemoveSeriesDialog';
 import { ReadingListView } from './ReadingListView';
+import { userPreferencesService } from '@/renderer/services/userPreferences';
+import routes from '@/common/constants/routes.json';
 
 type Props = unknown;
 
@@ -48,6 +51,7 @@ const Library: React.FC<Props> = () => {
   const setChapterList = useSetRecoilState(chapterListState);
   const setReadingLists = useSetRecoilState(readingListsState);
   const activeReadingList = useRecoilValue(activeReadingListState);
+  const location = useLocation();
 
   const showRemoveModal = (series: Series) => {
     setRemoveModalSeries(series);
@@ -81,7 +85,7 @@ const Library: React.FC<Props> = () => {
    * @returns a sorted list of series matching all filter props
    */
   const getFilteredList = (): Series[] => {
-    const filteredList = activeSeriesList.filter((series: Series) => {
+    let filteredList = activeSeriesList.filter((series: Series) => {
       if (!series) return false;
 
       if (series.preview) return false;
@@ -103,6 +107,16 @@ const Library: React.FC<Props> = () => {
 
       return true;
     });
+
+    // Filter by favorites or history if on those routes
+    if (location.pathname === `${routes.LIBRARY}/favorites`) {
+      filteredList = filteredList.filter(series => series.id && userPreferencesService.isFavorite(series.id));
+    } else if (location.pathname === `${routes.LIBRARY}/history`) {
+      const readingHistory = userPreferencesService.getReadingHistory();
+      filteredList = filteredList.filter(series => 
+        series.id && readingHistory.some(item => item.seriesId === series.id)
+      );
+    }
 
     switch (librarySort) {
       case LibrarySort.UnreadAsc:

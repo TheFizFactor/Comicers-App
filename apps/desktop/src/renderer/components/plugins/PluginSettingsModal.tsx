@@ -10,6 +10,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@comicers/ui/components/Dialog';
 import {
   Accordion,
@@ -17,10 +18,14 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@comicers/ui/components/Accordion';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Settings, Save, X } from 'lucide-react';
 import { Switch } from '@comicers/ui/components/Switch';
 import { Input } from '@comicers/ui/components/Input';
 import { Button } from '@comicers/ui/components/Button';
+import { Label } from '@comicers/ui/components/Label';
+import { Separator } from '@comicers/ui/components/Separator';
+import { ScrollArea } from '@comicers/ui/components/ScrollArea';
+import { Badge } from '@comicers/ui/components/Badge';
 
 type SettingTypes = {
   [key: string]: SettingType;
@@ -44,6 +49,7 @@ const PluginSettingsModal: React.FC<Props> = (props: Props) => {
   const [extensions, setExtensions] = useState<ExtensionMetadata[]>([]);
   const [settingTypesMap, setSettingTypesMap] = useState<SettingTypesMap>({});
   const [settingsMap, setSettingsMap] = useState<SettingsMap>({});
+  const [hasChanges, setHasChanges] = useState(false);
 
   const loadExtensionSettings = async () => {
     const newExtensions: ExtensionMetadata[] = await ipcRenderer.invoke(
@@ -69,13 +75,14 @@ const PluginSettingsModal: React.FC<Props> = (props: Props) => {
     setExtensions(newExtensions);
     setSettingTypesMap(newSettingTypesMap);
     setSettingsMap(newSettingsMap);
+    setHasChanges(false);
   };
 
   const updateSetting = (extensionId: string, key: string, value: unknown) => {
     const newSettingsMap = { ...settingsMap };
-
     newSettingsMap[extensionId][key] = value;
     setSettingsMap(newSettingsMap);
+    setHasChanges(true);
   };
 
   const saveExtensionSettings = async () => {
@@ -90,6 +97,7 @@ const PluginSettingsModal: React.FC<Props> = (props: Props) => {
         JSON.stringify(settingsMap[extension.id]),
       );
     }
+    setHasChanges(false);
   };
 
   const renderControl = (
@@ -97,17 +105,26 @@ const PluginSettingsModal: React.FC<Props> = (props: Props) => {
     // biome-ignore lint/suspicious/noExplicitAny: arbitrary schema
     curVal: any,
     onChangeFn: (newValue: unknown) => void,
+    label: string,
   ) => {
     switch (settingType) {
       case SettingType.BOOLEAN:
-        return <Switch checked={curVal} onCheckedChange={(checked) => onChangeFn(checked)} />;
+        return (
+          <div className="flex items-center space-x-2">
+            <Switch checked={curVal} onCheckedChange={(checked) => onChangeFn(checked)} />
+            <Label className="text-sm text-muted-foreground">{label}</Label>
+          </div>
+        );
       case SettingType.STRING:
         return (
-          <Input
-            className="max-w-52"
-            value={curVal}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChangeFn(e.target.value)}
-          />
+          <div className="flex flex-col space-y-2">
+            <Label className="text-sm">{label}</Label>
+            <Input
+              className="max-w-52"
+              value={curVal}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChangeFn(e.target.value)}
+            />
+          </div>
         );
       default:
         return <></>;
@@ -116,23 +133,40 @@ const PluginSettingsModal: React.FC<Props> = (props: Props) => {
 
   const renderRows = () => {
     return Object.entries(settingTypesMap).map(([extensionId, settingTypes]) => {
-      const extensionName = extensions.find((ext) => ext.id === extensionId)?.name;
+      const extension = extensions.find((ext) => ext.id === extensionId);
+      const extensionName = extension?.name;
       const settingKeys = Object.keys(settingTypes);
 
       return (
         <AccordionItem key={extensionId} value={extensionId}>
-          <AccordionTrigger className="hover:no-underline">{extensionName}</AccordionTrigger>
+          <AccordionTrigger className="hover:no-underline">
+            <div className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              <span>{extensionName}</span>
+            </div>
+          </AccordionTrigger>
           <AccordionContent>
-            {settingKeys.map((key) => (
-              <div className="w-full flex justify-between items-center mb-2 space-x-2" key={key}>
-                <span className="font-medium">{key}</span>
-                {renderControl(
-                  settingTypes[key],
-                  settingsMap[extensionId][key],
-                  (newValue: unknown) => updateSetting(extensionId, key, newValue),
-                )}
-              </div>
-            ))}
+            <div className="space-y-4 py-2">
+              {settingKeys.map((key) => (
+                <div key={key} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <h4 className="font-medium">{key}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Configure {key.toLowerCase().replace(/_/g, ' ')}
+                      </p>
+                    </div>
+                    {renderControl(
+                      settingTypes[key],
+                      settingsMap[extensionId][key],
+                      (newValue: unknown) => updateSetting(extensionId, key, newValue),
+                      key,
+                    )}
+                  </div>
+                  <Separator />
+                </div>
+              ))}
+            </div>
           </AccordionContent>
         </AccordionItem>
       );
@@ -150,29 +184,50 @@ const PluginSettingsModal: React.FC<Props> = (props: Props) => {
 
   return (
     <Dialog open={props.showing} onOpenChange={props.setShowing} defaultOpen={false}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Tiyo settings</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Settings className="h-5 w-5" />
+            Plugin Settings
+          </DialogTitle>
+          <DialogDescription>
+            Configure settings for your installed plugins and extensions
+          </DialogDescription>
         </DialogHeader>
         {loading ? (
-          <div className="w-full flex justify-center">
-            <Loader2 className="animate-spin" />
+          <div className="w-full flex justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin" />
           </div>
         ) : (
-          <Accordion type="single" collapsible>
-            {renderRows()}
-          </Accordion>
+          <ScrollArea className="max-h-[60vh] pr-4">
+            <Accordion type="single" collapsible className="w-full">
+              {renderRows()}
+            </Accordion>
+          </ScrollArea>
         )}
-        <DialogFooter>
-          <Button variant={'secondary'} onClick={() => props.setShowing(false)}>
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            onClick={() => saveExtensionSettings().then(() => props.setShowing(false))}
-          >
-            Save settings
-          </Button>
+        <DialogFooter className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {hasChanges && (
+              <Badge variant="secondary" className="animate-pulse">
+                Unsaved changes
+              </Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => props.setShowing(false)} className="gap-2">
+              <X className="h-4 w-4" />
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              onClick={() => saveExtensionSettings().then(() => props.setShowing(false))}
+              disabled={!hasChanges}
+              className="gap-2"
+            >
+              <Save className="h-4 w-4" />
+              Save changes
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

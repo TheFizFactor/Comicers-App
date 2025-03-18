@@ -12,12 +12,16 @@ import {
     ThumbsUp,
     History,
     Search,
-    Clock
+    Clock,
+    Heart
 } from 'lucide-react';
 import { readingStatsService } from '@/renderer/services/readingStats';
 import library from '@/renderer/services/library';
 import { Chapter } from '@tiyo/common';
 import React from 'react';
+import { userPreferencesService } from '@/renderer/services/userPreferences';
+import { ReadingHistory } from '@/renderer/components/library/ReadingHistory';
+import { Favorites } from '@/renderer/components/library/Favorites';
 
 // Simple welcome messages
 const quotes = [
@@ -48,12 +52,32 @@ const FeaturedCard: React.FC<{
     series: SeriesWithRating;
     onNavigate: (id: string, series: SeriesWithRating) => void;
 }> = ({ series, onNavigate }) => {
+    const [isFavorite, setIsFavorite] = React.useState(false);
+
+    React.useEffect(() => {
+        if (series.id) {
+            setIsFavorite(userPreferencesService.isFavorite(series.id));
+        }
+    }, [series.id]);
+
     const handleClick = () => {
         console.log('Featured Card Click - Series:', series);
         if (series?.sourceId && series?.extensionId) {
             const seriesPath = `${series.extensionId}/${series.sourceId}`;
             console.log('Navigating to:', seriesPath);
             onNavigate(seriesPath, series);
+        }
+    };
+
+    const handleFavoriteClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (series.id) {
+            if (isFavorite) {
+                userPreferencesService.removeFromFavorites(series.id);
+            } else {
+                userPreferencesService.addToFavorites(series.id);
+            }
+            setIsFavorite(!isFavorite);
         }
     };
 
@@ -82,9 +106,18 @@ const FeaturedCard: React.FC<{
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-60 group-hover:opacity-70 transition-opacity" />
             <div className="absolute bottom-0 left-0 right-0 p-6">
-                <div className="flex items-center gap-2 mb-2">
-                    <Flame className="w-5 h-5 text-orange-500" />
-                    <span className="text-sm font-medium text-orange-400">Featured Series</span>
+                <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2">
+                        <Flame className="w-5 h-5 text-orange-500" />
+                        <span className="text-sm font-medium text-orange-400">Featured Series</span>
+                    </div>
+                    <button
+                        onClick={handleFavoriteClick}
+                        className="p-1 bg-background/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background"
+                        title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                    >
+                        <Heart className={`w-4 h-4 ${isFavorite ? 'text-destructive fill-current' : 'text-muted-foreground'}`} />
+                    </button>
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-2 line-clamp-2">
                     {series.title}
@@ -98,12 +131,32 @@ const SeriesCard: React.FC<{
     series: SeriesWithRating;
     onNavigate: (id: string, series: SeriesWithRating) => void;
 }> = ({ series, onNavigate }) => {
+    const [isFavorite, setIsFavorite] = React.useState(false);
+
+    React.useEffect(() => {
+        if (series.id) {
+            setIsFavorite(userPreferencesService.isFavorite(series.id));
+        }
+    }, [series.id]);
+
     const handleClick = () => {
         console.log('Series Card Click - Series:', series);
         if (series?.sourceId && series?.extensionId) {
             const seriesPath = `${series.extensionId}/${series.sourceId}`;
             console.log('Navigating to:', seriesPath);
             onNavigate(seriesPath, series);
+        }
+    };
+
+    const handleFavoriteClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (series.id) {
+            if (isFavorite) {
+                userPreferencesService.removeFromFavorites(series.id);
+            } else {
+                userPreferencesService.addToFavorites(series.id);
+            }
+            setIsFavorite(!isFavorite);
         }
     };
 
@@ -137,6 +190,13 @@ const SeriesCard: React.FC<{
                         {series.title}
                     </h3>
                 </div>
+                <button
+                    onClick={handleFavoriteClick}
+                    className="absolute top-2 right-2 p-1 bg-background/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background"
+                    title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                >
+                    <Heart className={`w-4 h-4 ${isFavorite ? 'text-destructive fill-current' : 'text-muted-foreground'}`} />
+                </button>
             </div>
         </div>
     );
@@ -305,6 +365,26 @@ const ContinueReadingCard: React.FC<{
     series: ContinueReadingSeries;
     onNavigate: (id: string, series: ContinueReadingSeries) => void;
 }> = ({ series, onNavigate }) => {
+    const [isFavorite, setIsFavorite] = React.useState(false);
+
+    React.useEffect(() => {
+        if (series.id) {
+            setIsFavorite(userPreferencesService.isFavorite(series.id));
+        }
+    }, [series.id]);
+
+    const handleFavoriteClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (series.id) {
+            if (isFavorite) {
+                userPreferencesService.removeFromFavorites(series.id);
+            } else {
+                userPreferencesService.addToFavorites(series.id);
+            }
+            setIsFavorite(!isFavorite);
+        }
+    };
+
     return (
         <div 
             className="group relative flex flex-col cursor-pointer bg-muted/50 rounded-lg overflow-hidden"
@@ -327,7 +407,16 @@ const ContinueReadingCard: React.FC<{
                     )}
                 </div>
                 <div className="flex flex-col flex-1">
-                    <h3 className="font-medium mb-2 line-clamp-2">{series.title}</h3>
+                    <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-medium mb-2 line-clamp-2">{series.title}</h3>
+                        <button
+                            onClick={handleFavoriteClick}
+                            className="p-1 bg-background/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background flex-shrink-0"
+                            title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                        >
+                            <Heart className={`w-4 h-4 ${isFavorite ? 'text-destructive fill-current' : 'text-muted-foreground'}`} />
+                        </button>
+                    </div>
                     <div className="text-sm text-muted-foreground mb-2">
                         {series.lastReadChapter || 'Chapter 1'}
                     </div>
@@ -341,6 +430,86 @@ const ContinueReadingCard: React.FC<{
                     </div>
                 </div>
             </div>
+        </div>
+    );
+};
+
+// Add new components after the existing ones
+const LoadingSkeleton: React.FC = () => {
+    return (
+        <div className="space-y-16 animate-pulse">
+            {/* Featured Skeleton */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[300px]">
+                <div className="h-full bg-muted rounded-xl" />
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4">
+                    {[...Array(6)].map((_, i) => (
+                        <div key={i} className="aspect-[2/3] bg-muted rounded-lg" />
+                    ))}
+                </div>
+            </div>
+
+            {/* Section Skeletons */}
+            {[...Array(3)].map((_, i) => (
+                <div key={i} className="space-y-6">
+                    <div className="flex items-center gap-4">
+                        <div className="w-8 h-8 bg-muted rounded-full" />
+                        <div className="space-y-2">
+                            <div className="w-48 h-6 bg-muted rounded" />
+                            <div className="w-32 h-4 bg-muted rounded" />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4">
+                        {[...Array(8)].map((_, j) => (
+                            <div key={j} className="aspect-[2/3] bg-muted rounded-lg" />
+                        ))}
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+};
+
+const QuickActions: React.FC = () => {
+    const navigate = useNavigate();
+    const actions = [
+        { icon: <BookOpen className="w-5 h-5" />, label: 'Browse Library', path: '/library' },
+        { icon: <Search className="w-5 h-5" />, label: 'Search Series', path: '/search' }
+    ];
+
+    return (
+        <div className="grid grid-cols-2 gap-4">
+            {actions.map((action, index) => (
+                <button
+                    key={index}
+                    onClick={() => navigate(action.path)}
+                    className="flex flex-col items-center justify-center p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors group"
+                >
+                    <div className="text-primary mb-2 group-hover:scale-110 transition-transform">
+                        {action.icon}
+                    </div>
+                    <span className="text-sm font-medium">{action.label}</span>
+                </button>
+            ))}
+        </div>
+    );
+};
+
+const ErrorState: React.FC<{ message: string; onRetry: () => void }> = ({ message, onRetry }) => {
+    return (
+        <div className="text-center py-12">
+            <div className="w-16 h-16 mx-auto bg-destructive/10 rounded-full flex items-center justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-destructive" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Something went wrong</h3>
+            <p className="text-muted-foreground mb-4">{message}</p>
+            <button
+                onClick={onRetry}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+            >
+                Try Again
+            </button>
         </div>
     );
 };
@@ -361,6 +530,9 @@ export const HomePage: React.FC = () => {
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [filteredSeries, setFilteredSeries] = useState<SeriesWithRating[]>([]);
     const [isSearching, setIsSearching] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
+    const [activeTab, setActiveTab] = useState<'home' | 'history' | 'favorites'>('home');
 
     // Filter series based on search and category
     useEffect(() => {
@@ -536,6 +708,22 @@ export const HomePage: React.FC = () => {
         setRecentlyAdded(randomSeries.slice(0, 8));
     }, [seriesList]);
 
+    // Add debounced search suggestions
+    useEffect(() => {
+        if (searchQuery.length >= 2) {
+            const suggestions = seriesList
+                .filter(series => 
+                    series.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    series.description?.toLowerCase().includes(searchQuery.toLowerCase())
+                )
+                .map(series => series.title)
+                .slice(0, 5);
+            setSearchSuggestions(suggestions);
+        } else {
+            setSearchSuggestions([]);
+        }
+    }, [searchQuery, seriesList]);
+
     const handleSeriesClick = (path: string, series: SeriesWithRating) => {
         console.log('Handling series click:', path);
         if (!path) {
@@ -584,11 +772,11 @@ export const HomePage: React.FC = () => {
         <div className="flex flex-col w-full max-w-[1800px] mx-auto px-4 py-6 pb-12 space-y-12">
             {/* Welcome Banner */}
             <div className="w-full max-w-3xl mx-auto text-center space-y-6 py-8">
-                <h1 className="text-3xl font-semibold">
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
                     Welcome to Comicers
                 </h1>
                 <p 
-                    className={`text-muted-foreground transition-opacity duration-200 ease-in-out ${
+                    className={`text-lg text-muted-foreground transition-opacity duration-200 ease-in-out ${
                         isQuoteVisible ? 'opacity-100' : 'opacity-0'
                     }`}
                 >
@@ -596,126 +784,195 @@ export const HomePage: React.FC = () => {
                 </p>
             </div>
 
+            {/* Quick Actions */}
+            <div className="w-full max-w-[1200px] mx-auto">
+                <QuickActions />
+            </div>
+
             {/* Search and Filters */}
             <div className="space-y-6 max-w-[1200px] mx-auto w-full">
-                <SearchBar onSearch={handleSearch} />
+                <div className="relative">
+                    <SearchBar onSearch={handleSearch} />
+                    {searchSuggestions.length > 0 && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-background border rounded-lg shadow-lg z-50">
+                            {searchSuggestions.map((suggestion, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => {
+                                        setSearchQuery(suggestion);
+                                        setSearchSuggestions([]);
+                                    }}
+                                    className="w-full px-4 py-2 text-left hover:bg-muted transition-colors"
+                                >
+                                    {suggestion}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
                 <div className="w-full px-4">
                     <CategoryFilters onSelect={handleCategorySelect} selected={selectedCategory} />
                 </div>
             </div>
 
-            {loading ? (
-                <div className="flex justify-center items-center h-[300px]">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                </div>
+            {/* Tab Navigation */}
+            <div className="flex justify-center space-x-4 border-b">
+                <button
+                    onClick={() => setActiveTab('home')}
+                    className={`px-4 py-2 font-medium transition-colors ${
+                        activeTab === 'home'
+                            ? 'text-primary border-b-2 border-primary'
+                            : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                >
+                    Home
+                </button>
+                <button
+                    onClick={() => setActiveTab('history')}
+                    className={`px-4 py-2 font-medium transition-colors ${
+                        activeTab === 'history'
+                            ? 'text-primary border-b-2 border-primary'
+                            : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                >
+                    Reading History
+                </button>
+                <button
+                    onClick={() => setActiveTab('favorites')}
+                    className={`px-4 py-2 font-medium transition-colors ${
+                        activeTab === 'favorites'
+                            ? 'text-primary border-b-2 border-primary'
+                            : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                >
+                    Favorites
+                </button>
+            </div>
+
+            {error ? (
+                <ErrorState message={error} onRetry={() => setError(null)} />
+            ) : loading ? (
+                <LoadingSkeleton />
             ) : (
                 <div className="space-y-16">
-                    {/* Search Results */}
-                    {(searchQuery || selectedCategory !== 'All') && (
+                    {activeTab === 'home' && (
                         <>
-                            {isSearching ? (
-                                <div className="flex justify-center items-center h-[200px]">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                                </div>
-                            ) : filteredSeries.length > 0 ? (
-                                <SeriesSection
-                                    title="Search Results"
-                                    description={`Found ${filteredSeries.length} series matching your criteria`}
-                                    series={filteredSeries}
-                                    onNavigate={handleSeriesClick}
-                                    icon={<Search className="w-5 h-5" />}
-                                />
-                            ) : (
-                                <div className="text-center py-12">
-                                    <Search className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                                    <h3 className="text-xl font-semibold mb-2">No Results Found</h3>
-                                    <p className="text-muted-foreground">
-                                        Try adjusting your search or filters to find what you're looking for
-                                    </p>
-                                </div>
+                            {/* Search Results */}
+                            {(searchQuery || selectedCategory !== 'All') && (
+                                <>
+                                    {isSearching ? (
+                                        <div className="flex justify-center items-center h-[200px]">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                        </div>
+                                    ) : filteredSeries.length > 0 ? (
+                                        <SeriesSection
+                                            title="Search Results"
+                                            description={`Found ${filteredSeries.length} series matching your criteria`}
+                                            series={filteredSeries}
+                                            onNavigate={handleSeriesClick}
+                                            icon={<Search className="w-5 h-5" />}
+                                        />
+                                    ) : (
+                                        <div className="text-center py-12">
+                                            <Search className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                                            <h3 className="text-xl font-semibold mb-2">No Results Found</h3>
+                                            <p className="text-muted-foreground">
+                                                Try adjusting your search or filters to find what you're looking for
+                                            </p>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+
+                            {/* Only show other sections if not searching */}
+                            {!searchQuery && selectedCategory === 'All' && (
+                                <>
+                                    {/* Continue Reading Section */}
+                                    {continueReading.length > 0 && (
+                                        <div className="space-y-6">
+                                            <div className="flex items-start gap-4">
+                                                <History className="w-5 h-5 text-primary mt-1" />
+                                                <div>
+                                                    <h2 className="text-2xl font-bold mb-2">Continue Reading</h2>
+                                                    <p className="text-base text-muted-foreground">Pick up where you left off</p>
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                {continueReading.map((series, index) => (
+                                                    <ContinueReadingCard 
+                                                        key={series.id || index} 
+                                                        series={series} 
+                                                        onNavigate={handleSeriesClick}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Recently Added Section */}
+                                    <SeriesSection
+                                        title="Recently Added"
+                                        description="Latest additions to the library"
+                                        series={recentlyAdded}
+                                        onNavigate={handleSeriesClick}
+                                        icon={<Clock className="w-5 h-5" />}
+                                    />
+
+                                    {/* Featured Series */}
+                                    {popularSeries.length > 0 && (
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[300px]">
+                                            <div className="h-full">
+                                                <FeaturedCard 
+                                                    series={popularSeries[0]} 
+                                                    onNavigate={handleSeriesClick}
+                                                />
+                                            </div>
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4">
+                                                {popularSeries.slice(1, 7).map((series, index) => (
+                                                    <SeriesCard 
+                                                        key={series.id || index} 
+                                                        series={series} 
+                                                        onNavigate={handleSeriesClick}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <SeriesSection
+                                        title="Popular Series"
+                                        description="Top rated series from all sources"
+                                        series={popularSeries.slice(5)}
+                                        onNavigate={handleSeriesClick}
+                                        icon={<Flame className="w-5 h-5" />}
+                                    />
+
+                                    <SeriesSection
+                                        title="Recommended For You"
+                                        description="Based on your reading history"
+                                        series={recommendedSeries}
+                                        onNavigate={handleSeriesClick}
+                                        icon={<ThumbsUp className="w-5 h-5" />}
+                                    />
+
+                                    <SeriesSection
+                                        title="Trending Now"
+                                        description="What's hot right now"
+                                        series={trendingSeries}
+                                        onNavigate={handleSeriesClick}
+                                        icon={<TrendingUp className="w-5 h-5" />}
+                                    />
+                                </>
                             )}
                         </>
                     )}
 
-                    {/* Only show other sections if not searching */}
-                    {!searchQuery && selectedCategory === 'All' && (
-                        <>
-                            {/* Continue Reading Section */}
-                            {continueReading.length > 0 && (
-                                <div className="space-y-6">
-                                    <div className="flex items-start gap-4">
-                                        <History className="w-5 h-5 text-primary mt-1" />
-                                        <div>
-                                            <h2 className="text-2xl font-bold mb-2">Continue Reading</h2>
-                                            <p className="text-base text-muted-foreground">Pick up where you left off</p>
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {continueReading.map((series, index) => (
-                                            <ContinueReadingCard 
-                                                key={series.id || index} 
-                                                series={series} 
-                                                onNavigate={handleSeriesClick}
-                                            />
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
+                    {activeTab === 'history' && (
+                        <ReadingHistory onNavigate={handleSeriesClick} />
+                    )}
 
-                            {/* Recently Added Section */}
-                            <SeriesSection
-                                title="Recently Added"
-                                description="Latest additions to the library"
-                                series={recentlyAdded}
-                                onNavigate={handleSeriesClick}
-                                icon={<Clock className="w-5 h-5" />}
-                            />
-
-                            {/* Featured Series */}
-                            {popularSeries.length > 0 && (
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[300px]">
-                                    <div className="h-full">
-                                        <FeaturedCard 
-                                            series={popularSeries[0]} 
-                                            onNavigate={handleSeriesClick}
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4">
-                                        {popularSeries.slice(1, 7).map((series, index) => (
-                                            <SeriesCard 
-                                                key={series.id || index} 
-                                                series={series} 
-                                                onNavigate={handleSeriesClick}
-                                            />
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            <SeriesSection
-                                title="Popular Series"
-                                description="Top rated series from all sources"
-                                series={popularSeries.slice(5)}
-                                onNavigate={handleSeriesClick}
-                                icon={<Flame className="w-5 h-5" />}
-                            />
-
-                            <SeriesSection
-                                title="Recommended For You"
-                                description="Based on your reading history"
-                                series={recommendedSeries}
-                                onNavigate={handleSeriesClick}
-                                icon={<ThumbsUp className="w-5 h-5" />}
-                            />
-
-                            <SeriesSection
-                                title="Trending Now"
-                                description="What's hot right now"
-                                series={trendingSeries}
-                                onNavigate={handleSeriesClick}
-                                icon={<TrendingUp className="w-5 h-5" />}
-                            />
-                        </>
+                    {activeTab === 'favorites' && (
+                        <Favorites onNavigate={handleSeriesClick} />
                     )}
                 </div>
             )}

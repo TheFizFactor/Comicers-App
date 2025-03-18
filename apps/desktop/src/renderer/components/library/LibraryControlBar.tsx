@@ -46,6 +46,8 @@ import {
 } from '@comicers/ui/components/DropdownMenu';
 import { Input } from '@comicers/ui/components/Input';
 import { ReadingListsDialog } from './ReadingListsDialog';
+import { useLocation } from 'react-router-dom';
+import routes from '@/common/constants/routes.json';
 
 const SORT_ICONS = {
   [LibrarySort.TitleAsc]: <ArrowUp size={14} />,
@@ -59,6 +61,7 @@ type Props = {
 };
 
 const LibraryControlBar: React.FC<Props> = (props: Props) => {
+  const location = useLocation();
   const setSeriesList = useSetRecoilState(seriesListState);
   const [reloadingSeriesList, setReloadingSeriesList] = useRecoilState(reloadingSeriesListState);
   const setFilter = useSetRecoilState(filterState);
@@ -71,6 +74,15 @@ const LibraryControlBar: React.FC<Props> = (props: Props) => {
   const [librarySort, setLibrarySort] = useRecoilState(librarySortState);
   const chapterLanguages = useRecoilValue(chapterLanguagesState);
   const [showingReadingLists, setShowingReadingLists] = useState(false);
+
+  const getPageTitle = () => {
+    if (location.pathname === `${routes.LIBRARY}/favorites`) {
+      return "Favorites";
+    } else if (location.pathname === `${routes.LIBRARY}/history`) {
+      return "Reading History";
+    }
+    return "Library";
+  };
 
   const refreshHandler = () => {
     if (!reloadingSeriesList) {
@@ -86,6 +98,7 @@ const LibraryControlBar: React.FC<Props> = (props: Props) => {
   return (
     <div className="flex justify-between flex-nowrap py-3">
       <div className="flex gap-3 flex-nowrap">
+        <h1 className="text-2xl font-bold">{getPageTitle()}</h1>
         <Button disabled={reloadingSeriesList} onClick={refreshHandler}>
           {reloadingSeriesList && <Loader2 className="animate-spin" />}
           {reloadingSeriesList ? 'Refreshing...' : 'Refresh'}{' '}

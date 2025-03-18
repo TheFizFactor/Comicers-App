@@ -38,6 +38,7 @@ import {
   Wallet,
   Copy,
   Coffee,
+  History,
 } from 'lucide-react';
 import {
   Collapsible,
@@ -107,7 +108,7 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
   };
 
   return (
-    <Sidebar className="bg-card border-r-0" {...props}>
+    <Sidebar className="bg-card border-r-0 shadow-sm" {...props}>
       <SidebarHeader className="pt-8 px-6">
         <div className="flex items-center justify-center">
           <div className="flex items-center justify-center overflow-hidden">
@@ -137,13 +138,13 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
         )}
 
         <SidebarGroup>
-          <SidebarMenu>
+          <SidebarMenu className="space-y-1">
             <SidebarMenuItem>
               <SidebarMenuButton 
                 onClick={() => navigate('/')}
                 className={cn(
-                  "px-3 py-3 rounded-lg hover:bg-accent/50 transition-colors",
-                  (location.pathname === '/' || location.pathname === '') && "bg-accent"
+                  "px-3 py-3 rounded-lg hover:bg-accent/50 transition-all duration-200 ease-in-out",
+                  (location.pathname === '/' || location.pathname === '') && "bg-accent text-accent-foreground shadow-sm"
                 )}
               >
                 <Home className="h-4 w-4" />
@@ -155,8 +156,8 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
               <SidebarMenuButton 
                 onClick={() => navigate(routes.OVERVIEW)}
                 className={cn(
-                  "px-3 py-3 rounded-lg hover:bg-accent/50 transition-colors",
-                  location.pathname === routes.OVERVIEW && "bg-accent"
+                  "px-3 py-3 rounded-lg hover:bg-accent/50 transition-all duration-200 ease-in-out",
+                  location.pathname === routes.OVERVIEW && "bg-accent text-accent-foreground shadow-sm"
                 )}
               >
                 <ChartBar className="h-4 w-4" />
@@ -168,8 +169,8 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
               <SidebarMenuButton 
                 onClick={() => navigate(routes.FORUM)}
                 className={cn(
-                  "px-3 py-3 rounded-lg hover:bg-accent/50 transition-colors",
-                  location.pathname === routes.FORUM && "bg-accent"
+                  "px-3 py-3 rounded-lg hover:bg-accent/50 transition-all duration-200 ease-in-out",
+                  location.pathname === routes.FORUM && "bg-accent text-accent-foreground shadow-sm"
                 )}
               >
                 <MessageCircle className="h-4 w-4" />
@@ -181,8 +182,8 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
                   <SidebarMenuButton className={cn(
-                    "px-3 py-3 rounded-lg hover:bg-accent/50 transition-colors",
-                    location.pathname.startsWith(routes.SEARCH) && "bg-accent"
+                    "px-3 py-3 rounded-lg hover:bg-accent/50 transition-all duration-200 ease-in-out",
+                    location.pathname.startsWith(routes.SEARCH) && "bg-accent text-accent-foreground shadow-sm"
                   )}>
                     <Compass className="h-4 w-4" />
                     <span>Explorer</span>
@@ -193,7 +194,10 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
                   <SidebarMenuSub>
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton
-                        className="px-3 py-2 rounded-lg hover:bg-accent/50 transition-colors text-sm text-muted-foreground hover:text-foreground"
+                        className={cn(
+                          "px-3 py-2 rounded-lg hover:bg-accent/50 transition-all duration-200 ease-in-out text-sm text-muted-foreground hover:text-foreground",
+                          location.pathname === routes.SEARCH && "bg-accent text-accent-foreground shadow-sm"
+                        )}
                         onClick={() => navigate(routes.SEARCH)}
                       >
                         <span>Browse All</span>
@@ -201,7 +205,10 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
                     </SidebarMenuSubItem>
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton
-                        className="px-3 py-2 rounded-lg hover:bg-accent/50 transition-colors text-sm text-muted-foreground hover:text-foreground"
+                        className={cn(
+                          "px-3 py-2 rounded-lg hover:bg-accent/50 transition-all duration-200 ease-in-out text-sm text-muted-foreground hover:text-foreground",
+                          location.pathname === routes.PLUGINS && "bg-accent text-accent-foreground shadow-sm"
+                        )}
                         onClick={() => navigate(routes.PLUGINS)}
                       >
                         <span>Plugins</span>
@@ -216,8 +223,8 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
                   <SidebarMenuButton className={cn(
-                    "px-3 py-3 rounded-lg hover:bg-accent/50 transition-colors",
-                    location.pathname.startsWith(routes.LIBRARY) && "bg-accent"
+                    "px-3 py-3 rounded-lg hover:bg-accent/50 transition-all duration-200 ease-in-out",
+                    location.pathname.startsWith(routes.LIBRARY) && "bg-accent text-accent-foreground shadow-sm"
                   )}>
                     <LibraryBig className="h-4 w-4" />
                     <span>Library</span>
@@ -229,8 +236,8 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton
                         className={cn(
-                          "px-3 py-2 rounded-lg hover:bg-accent/50 transition-colors text-sm text-muted-foreground hover:text-foreground",
-                          location.pathname === routes.LIBRARY && !libraryFilterCategory && "bg-accent text-foreground"
+                          "px-3 py-2 rounded-lg hover:bg-accent/50 transition-all duration-200 ease-in-out text-sm text-muted-foreground hover:text-foreground",
+                          location.pathname === routes.LIBRARY && !libraryFilterCategory && "bg-accent text-accent-foreground shadow-sm"
                         )}
                         onClick={() => {
                           setLibraryFilterCategory('');
@@ -240,14 +247,41 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
                         <span>All Series</span>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
+
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        className={cn(
+                          "px-3 py-2 rounded-lg hover:bg-accent/50 transition-all duration-200 ease-in-out text-sm text-muted-foreground hover:text-foreground",
+                          location.pathname === `${routes.LIBRARY}/favorites` && "bg-accent text-accent-foreground shadow-sm"
+                        )}
+                        onClick={() => navigate(`${routes.LIBRARY}/favorites`)}
+                      >
+                        <Heart className="h-4 w-4 mr-2" />
+                        <span>Favorites</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        className={cn(
+                          "px-3 py-2 rounded-lg hover:bg-accent/50 transition-all duration-200 ease-in-out text-sm text-muted-foreground hover:text-foreground",
+                          location.pathname === `${routes.LIBRARY}/history` && "bg-accent text-accent-foreground shadow-sm"
+                        )}
+                        onClick={() => navigate(`${routes.LIBRARY}/history`)}
+                      >
+                        <History className="h-4 w-4 mr-2" />
+                        <span>Reading History</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+
                     {categories.map((category) => (
                       <SidebarMenuSubItem key={category.id}>
                         <ContextMenu>
                           <ContextMenuTrigger>
                             <SidebarMenuSubButton
                               className={cn(
-                                "px-3 py-2 rounded-lg hover:bg-accent/50 transition-colors text-sm text-muted-foreground hover:text-foreground group/item",
-                                location.pathname === routes.LIBRARY && libraryFilterCategory === category.id && "bg-accent text-foreground"
+                                "px-3 py-2 rounded-lg hover:bg-accent/50 transition-all duration-200 ease-in-out text-sm text-muted-foreground hover:text-foreground group/item",
+                                location.pathname === routes.LIBRARY && libraryFilterCategory === category.id && "bg-accent text-accent-foreground shadow-sm"
                               )}
                               onClick={() => {
                                 setLibraryFilterCategory(category.id);
@@ -259,7 +293,7 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-6 w-6 hover:bg-accent"
+                                  className="h-6 w-6 hover:bg-accent/50 transition-colors duration-200"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setSelectedCategory(category);
@@ -271,7 +305,7 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-6 w-6 hover:bg-accent"
+                                  className="h-6 w-6 hover:bg-accent/50 transition-colors duration-200"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setSelectedCategory(category);
@@ -308,7 +342,7 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
                     ))}
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton
-                        className="px-3 py-2 rounded-lg hover:bg-accent/50 transition-colors text-sm text-muted-foreground/50 hover:text-muted-foreground"
+                        className="px-3 py-2 rounded-lg hover:bg-accent/50 transition-all duration-200 ease-in-out text-sm text-muted-foreground hover:text-foreground"
                         onClick={() => setShowingNewCategoryDialog(true)}
                       >
                         <span>New category...</span>
@@ -323,8 +357,8 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
               <SidebarMenuButton 
                 onClick={() => navigate(routes.DOWNLOADS)}
                 className={cn(
-                  "px-3 py-3 rounded-lg hover:bg-accent/50 transition-colors",
-                  location.pathname === routes.DOWNLOADS && "bg-accent"
+                  "px-3 py-3 rounded-lg hover:bg-accent/50 transition-all duration-200 ease-in-out",
+                  location.pathname === routes.DOWNLOADS && "bg-accent text-accent-foreground shadow-sm"
                 )}
               >
                 <FolderDown className="h-4 w-4" />
@@ -340,7 +374,7 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
           <SidebarMenuItem>
             <Dialog>
               <DialogTrigger asChild>
-                <SidebarMenuButton className="px-3 py-3 rounded-lg hover:bg-accent/50 transition-colors">
+                <SidebarMenuButton className="px-3 py-3 rounded-lg hover:bg-accent/50 transition-all duration-200 ease-in-out">
                   <Settings className="h-4 w-4" />
                   <span>Settings</span>
                 </SidebarMenuButton>
@@ -353,7 +387,7 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
             <Dialog>
               <DialogTrigger asChild>
                 <SidebarMenuButton
-                  className="px-3 py-3 rounded-lg bg-primary hover:bg-primary/90 transition-colors text-primary-foreground hover:text-primary-foreground/90"
+                  className="px-3 py-3 rounded-lg bg-primary hover:bg-primary/90 transition-all duration-200 ease-in-out text-primary-foreground hover:text-primary-foreground/90 shadow-sm"
                 >
                   <Heart className="h-4 w-4 fill-current" />
                   <span className="font-medium">Support Comicers</span>
@@ -371,7 +405,7 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
                 </DialogHeader>
                 
                 <div className="space-y-6">
-                  <div className="bg-muted/50 rounded-lg p-4 border">
+                  <div className="bg-muted/50 rounded-lg p-4 border shadow-sm">
                     <h3 className="font-semibold mb-3 flex items-center gap-2">
                       <Star className="h-5 w-5 text-primary fill-primary" />
                       Supporter Benefits
@@ -439,13 +473,13 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
                         </TabsTrigger>
                       </TabsList>
                       <TabsContent value="github" className="space-y-4">
-                        <div className="bg-muted/30 rounded-lg p-4">
+                        <div className="bg-muted/30 rounded-lg p-4 shadow-sm">
                           <p className="text-sm text-muted-foreground">
                             Support us through GitHub Sponsors with monthly or one-time donations. GitHub Sponsors is the preferred way to support Comicers as it helps us maintain and improve the project.
                           </p>
                         </div>
                         <Button 
-                          className="w-full"
+                          className="w-full shadow-sm"
                           onClick={() => window.open('https://github.com/sponsors/TheFizFactor', '_blank')}
                         >
                           <Github className="mr-2 h-4 w-4" />
@@ -460,13 +494,13 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
                               Bitcoin (BTC)
                             </Label>
                             <div className="relative">
-                              <code className="relative block w-full rounded bg-muted p-3 font-mono text-sm">
+                              <code className="relative block w-full rounded bg-muted p-3 font-mono text-sm shadow-sm">
                                 bc1qpwvvrjzdwjgw94wknas7yk0qlurh46exwqjvdp
                               </code>
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="absolute right-2 top-2 h-6"
+                                className="absolute right-2 top-2 h-6 hover:bg-accent/50 transition-colors duration-200"
                                 onClick={() => {
                                   navigator.clipboard.writeText('bc1qpwvvrjzdwjgw94wknas7yk0qlurh46exwqjvdp');
                                   toast({
@@ -485,13 +519,13 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
                               Litecoin (LTC)
                             </Label>
                             <div className="relative">
-                              <code className="relative block w-full rounded bg-muted p-3 font-mono text-sm">
+                              <code className="relative block w-full rounded bg-muted p-3 font-mono text-sm shadow-sm">
                                 LNrQarKkQqm4GVLk7yAz3vic7cXhKqFXjz
                               </code>
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="absolute right-2 top-2 h-6"
+                                className="absolute right-2 top-2 h-6 hover:bg-accent/50 transition-colors duration-200"
                                 onClick={() => {
                                   navigator.clipboard.writeText('LNrQarKkQqm4GVLk7yAz3vic7cXhKqFXjz');
                                   toast({
@@ -510,7 +544,7 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
                         <div className="grid gap-4">
                           <Button 
                             variant="outline" 
-                            className="w-full"
+                            className="w-full shadow-sm"
                             onClick={() => window.open('https://www.buymeacoffee.com/comicers', '_blank')}
                           >
                             <Coffee className="mr-2 h-4 w-4" />
@@ -518,7 +552,7 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
                           </Button>
                           <Button 
                             variant="outline" 
-                            className="w-full"
+                            className="w-full shadow-sm"
                             onClick={() => window.open('https://ko-fi.com/comicers', '_blank')}
                           >
                             <Coffee className="mr-2 h-4 w-4" />
@@ -537,13 +571,13 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
             <Dialog>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <SidebarMenuButton className="px-3 py-3 rounded-lg hover:bg-accent/50 transition-colors text-xs text-muted-foreground">
+                  <SidebarMenuButton className="px-3 py-3 rounded-lg hover:bg-accent/50 transition-all duration-200 ease-in-out text-xs text-muted-foreground">
                     <span>v{packageJson.version}</span>
                     <Info className="ml-auto h-3 w-3" />
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
-                  className="w-[--radix-dropdown-menu-trigger-width] rounded-lg"
+                  className="w-[--radix-dropdown-menu-trigger-width] rounded-lg shadow-sm"
                   side="right"
                   align="end"
                   sideOffset={4}

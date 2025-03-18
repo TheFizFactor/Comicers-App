@@ -6,10 +6,19 @@ import persistantStore from '@/renderer/util/persistantStore';
 import { TrackerMetadata } from '@/common/models/types';
 import { AccordionContent, AccordionTrigger } from '@comicers/ui/components/Accordion';
 import { Button } from '@comicers/ui/components/Button';
-import { ExternalLinkIcon, Loader2Icon, CheckCircle2, WifiOffIcon } from 'lucide-react';
+import {
+  ExternalLinkIcon,
+  Loader2Icon,
+  CheckCircle2,
+  WifiOffIcon,
+  LogInIcon,
+  LogOutIcon,
+  AlertCircleIcon,
+} from 'lucide-react';
 import { Input } from '@comicers/ui/components/Input';
 import { Alert, AlertDescription } from '@comicers/ui/components/Alert';
 import { useNetworkStatus } from '@/renderer/hooks/useNetworkStatus';
+import { Badge } from '@comicers/ui/components/Badge';
 
 type Props = {
   trackerMetadata: TrackerMetadata;
@@ -126,44 +135,34 @@ export const TrackerAuthOAuth: React.FC<Props> = (props: Props) => {
   return (
     <>
       <AccordionTrigger className="hover:no-underline">
-        <div className="flex justify-between items-center w-full pr-2">
-          <span>{props.trackerMetadata.name}</span>
-          {!isOnline ? (
-            <div className="flex items-center space-x-2 text-muted-foreground">
-              <WifiOffIcon className="w-4 h-4" />
-              <span>Offline mode</span>
+        <div className="flex justify-between items-center w-full">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-medium">
+              {props.trackerMetadata.name.substring(0, 2)}
             </div>
-          ) : username ? (
-            <div className="flex space-x-2">
-              <span>
-                Logged in as{' '}
-                <code className="relative bg-muted px-[0.3rem] py-[0.2rem] text-sm font-semibold">
-                  {username}
-                </code>
-              </span>
-              <Button
-                size="sm"
-                variant={'destructive'}
-                className="!h-6"
-                asChild
-                onClick={(e) => {
-                  e.stopPropagation();
-                  saveAccessToken('');
-                }}
-              >
-                <span>Unlink</span>
-              </Button>
+            <div className="flex flex-col items-start">
+              <span className="font-medium">{props.trackerMetadata.name}</span>
+              {!isOnline ? (
+                <Badge variant="outline" className="text-muted-foreground">
+                  <WifiOffIcon className="w-3 h-3 mr-1" />
+                  Offline
+                </Badge>
+              ) : username ? (
+                <span className="text-sm text-muted-foreground">
+                  Logged in as <span className="font-medium">{username}</span>
+                </span>
+              ) : (
+                <Badge variant="outline" className="text-muted-foreground">Not connected</Badge>
+              )}
             </div>
-          ) : (
-            <span>Not logged in.</span>
-          )}
+          </div>
         </div>
       </AccordionTrigger>
 
-      <AccordionContent>
+      <AccordionContent className="pt-4 pb-2">
         <div className="flex flex-col space-y-4">
           {!isOnline && (
-            <Alert variant="destructive" className="py-2 bg-yellow-500/10 border-yellow-500">
+            <Alert variant="default" className="bg-yellow-500/10 border-yellow-500">
               <AlertDescription className="flex items-center text-yellow-500">
                 <WifiOffIcon className="w-4 h-4 mr-2" />
                 You are currently offline. Authentication requires an internet connection.
@@ -172,30 +171,40 @@ export const TrackerAuthOAuth: React.FC<Props> = (props: Props) => {
           )}
 
           {props.trackerMetadata.id === 'MyAnimeList' ? (
-            <div className="p-4 border-2 border-yellow-500 rounded-lg bg-yellow-500/10">
-              <h3 className="text-lg font-semibold mb-2 text-yellow-500">⚠️ Under Development</h3>
-              <p className="text-sm text-muted-foreground mb-2">
-                The MyAnimeList integration is currently under development and may not work as expected. We are working on:
-              </p>
-              <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
-                <li>Fixing authentication issues</li>
-                <li>Improving error handling</li>
-                <li>Enhancing sync reliability</li>
-              </ul>
-              <p className="text-sm text-muted-foreground mt-4">
-                Please use AniList or MangaUpdates for tracking until this integration is complete.
-              </p>
-            </div>
+            <Alert variant="default" className="border-2 border-yellow-500 bg-yellow-500/10">
+              <div className="flex flex-col space-y-2">
+                <div className="flex items-center gap-2 font-semibold text-yellow-500">
+                  <AlertCircleIcon className="h-4 w-4" />
+                  Under Development
+                </div>
+                <AlertDescription className="text-muted-foreground">
+                  <p className="mb-2">
+                    The MyAnimeList integration is currently under development and may not work as expected. We are working on:
+                  </p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>Fixing authentication issues</li>
+                    <li>Improving error handling</li>
+                    <li>Enhancing sync reliability</li>
+                  </ul>
+                  <p className="mt-2">
+                    Please use AniList or MangaUpdates for tracking until this integration is complete.
+                  </p>
+                </AlertDescription>
+              </div>
+            </Alert>
           ) : (
             <>
               {error && (
-                <Alert variant="destructive" className="py-2">
-                  <AlertDescription>{error}</AlertDescription>
+                <Alert variant="destructive">
+                  <AlertDescription className="flex items-center">
+                    <AlertCircleIcon className="w-4 h-4 mr-2" />
+                    {error}
+                  </AlertDescription>
                 </Alert>
               )}
               
               {showSuccess && (
-                <Alert variant="default" className="py-2 bg-green-500/10 border-green-500">
+                <Alert variant="default" className="bg-green-500/10 border-green-500">
                   <AlertDescription className="flex items-center text-green-500">
                     <CheckCircle2 className="w-4 h-4 mr-2" />
                     Successfully linked with {props.trackerMetadata.name}!
@@ -203,74 +212,100 @@ export const TrackerAuthOAuth: React.FC<Props> = (props: Props) => {
                 </Alert>
               )}
 
-              <div className="flex flex-col space-y-2">
-                <div className="flex space-x-4 items-center">
-                  <div className="bg-foreground text-background w-8 h-8 rounded-full flex items-center justify-center">
-                    <span className="font-bold">1</span>
-                  </div>
-                  <Button variant="link" asChild disabled={!isOnline}>
-                    <a href={authUrls[props.trackerMetadata.id]} target="_blank">
-                      Authenticate on {props.trackerMetadata.name}
-                      <ExternalLinkIcon className="ml-2 w-4 h-4" />
-                    </a>
-                  </Button>
-                </div>
-
-                <div className="flex space-x-4">
-                  <div className="bg-foreground text-background w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="font-bold">2</span>
-                  </div>
-                  <div className="flex-grow">
-                    {props.trackerMetadata.id === 'MyAnimeList' && (
-                      <div className="text-sm text-muted-foreground mb-2">
-                        <ol className="list-decimal pl-5 space-y-1">
-                          <li>After clicking "Authenticate on MyAnimeList", <strong>complete the login process on MyAnimeList</strong></li>
-                          <li>You will be redirected to comicers.org with a code in the URL</li>
-                          <li>Copy the <strong>entire URL</strong> from your browser's address bar</li>
-                          <li>Paste it below and click Submit</li>
-                          <li>If authentication fails, try clicking Refresh and starting over</li>
-                        </ol>
+              {username ? (
+                <div className="flex flex-col space-y-4">
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-medium">
+                        {username.substring(0, 2).toUpperCase()}
                       </div>
-                    )}
+                      <div className="flex flex-col">
+                        <span className="font-medium">{username}</span>
+                        <span className="text-sm text-muted-foreground">Connected Account</span>
+                      </div>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => saveAccessToken('')}
+                      className="gap-2"
+                    >
+                      <LogOutIcon className="h-4 w-4" />
+                      Disconnect
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col space-y-6">
+                  <div className="flex items-center gap-4">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold">
+                      1
+                    </div>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start gap-2"
+                      disabled={!isOnline}
+                      asChild
+                    >
+                      <a href={authUrls[props.trackerMetadata.id]} target="_blank">
+                        <LogInIcon className="h-4 w-4" />
+                        Authenticate with {props.trackerMetadata.name}
+                        <ExternalLinkIcon className="ml-auto h-4 w-4" />
+                      </a>
+                    </Button>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-4">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold">
+                        2
+                      </div>
+                      <div className="flex-grow">
+                        <span className="text-sm font-medium">Enter Access Code</span>
+                        {props.trackerMetadata.id === 'MyAnimeList' && (
+                          <div className="text-sm text-muted-foreground mt-2 space-y-1">
+                            <p>After authentication:</p>
+                            <ol className="list-decimal pl-5 space-y-1">
+                              <li>You'll be redirected to comicers.org</li>
+                              <li>Copy the <strong>entire URL</strong> from your browser</li>
+                              <li>Paste it below and click Connect</li>
+                            </ol>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                     <Input
-                      className="w-full h-8 text-sm"
-                      value={accessCode || ''}
-                      placeholder={props.trackerMetadata.id === 'MyAnimeList' ? "Paste URL from browser (https://comicers.org/?code=...)" : "Paste access code..."}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAccessCode(e.target.value)}
+                      className="w-full"
+                      value={accessCode}
+                      placeholder={
+                        props.trackerMetadata.id === 'MyAnimeList'
+                          ? "Paste URL from browser (https://comicers.org/?code=...)"
+                          : "Paste access code..."
+                      }
+                      onChange={(e) => setAccessCode(e.target.value)}
                       disabled={!isOnline}
                     />
                   </div>
-                </div>
 
-                <div className="flex space-x-4 items-center">
-                  <div className="bg-foreground text-background w-8 h-8 rounded-full flex items-center justify-center">
-                    <span className="font-bold">3</span>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button onClick={() => submitAccessCode()} disabled={loading || !isOnline}>
-                      {loading ? (
-                        <>
-                          <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
-                          Authenticating...
-                        </>
-                      ) : (
-                        'Submit'
-                      )}
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => {
-                        setAccessCode('');
-                        setError(null);
-                        loadTrackerDetails();
-                      }}
-                      disabled={loading || !isOnline}
+                  <div className="flex items-center gap-4">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold">
+                      3
+                    </div>
+                    <Button
+                      className="w-full gap-2"
+                      onClick={() => submitAccessCode()}
+                      disabled={loading || !isOnline || !accessCode}
                     >
-                      Refresh
+                      {loading ? (
+                        <Loader2Icon className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <LogInIcon className="h-4 w-4" />
+                      )}
+                      Connect Account
                     </Button>
                   </div>
                 </div>
-              </div>
+              )}
             </>
           )}
         </div>
