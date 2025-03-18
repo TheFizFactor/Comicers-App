@@ -102,10 +102,17 @@ export default function App() {
           setUpdateInfo(updateInfo);
           setShowUpdateAvailableDialog(true);
           // Fetch release notes when update is available
-          ipcRenderer
-            .invoke(ipcChannels.APP.GET_RELEASE_NOTES, updateInfo.version)
-            .then((notes: string) => setReleaseNotes(notes))
-            .catch(console.error);
+          if (updateInfo?.version) {
+            ipcRenderer
+              .invoke(ipcChannels.APP.GET_RELEASE_NOTES, updateInfo.version)
+              .then((notes: string) => setReleaseNotes(notes))
+              .catch((error) => {
+                console.error('Error fetching release notes:', error);
+                setReleaseNotes('Failed to load release notes. Please try again later.');
+              });
+          } else {
+            setReleaseNotes('No release notes available.');
+          }
         },
         () => setShowUpdateDownloadedDialog(true),
       );

@@ -54,6 +54,11 @@ export const createUpdaterIpcHandlers = (ipcMain: IpcMain) => {
 
   ipcMain.handle(ipcChannels.APP.GET_RELEASE_NOTES, async (_event, version: string) => {
     try {
+      if (!version) {
+        console.warn('No version provided for release notes fetch');
+        return 'No release notes available.';
+      }
+
       // This assumes your releases are on GitHub. Adjust the URL if using a different platform
       const response = await axios.get(
         `https://api.github.com/repos/TheFizFactor/Comicers-App/releases/tags/v${version}`,
@@ -61,6 +66,9 @@ export const createUpdaterIpcHandlers = (ipcMain: IpcMain) => {
       return response.data.body || 'No release notes available.';
     } catch (error) {
       console.error('Error fetching release notes:', error);
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        return 'Release notes not found for this version.';
+      }
       return 'Failed to load release notes.';
     }
   });
