@@ -24,9 +24,8 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "ES2022",
-    "allowImportingTsExtensions": true,
     "allowJs": true,
-    "emitDeclarationOnly": true
+    "outDir": "dist"
   },
   "include": [
     "src"
