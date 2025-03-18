@@ -10,6 +10,17 @@ import { Loader2, Blocks, RefreshCw, Settings, ArrowUpCircle, Trash2 } from 'luc
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@comicers/ui/components/Card';
 import { Badge } from '@comicers/ui/components/Badge';
 
+interface AkiSearchResult {
+  objects: Array<{
+    package: {
+      name: string;
+      version: string;
+      description?: string;
+      author?: string;
+    };
+  }>;
+}
+
 const Plugins: React.FC = () => {
   const [currentTiyoVersion, setCurrentTiyoVersion] = useState<string | undefined>(undefined);
   const [availableTiyoVersion, setAvailableTiyoVersion] = useState<string | undefined>(undefined);
@@ -29,7 +40,7 @@ const Plugins: React.FC = () => {
 
     await aki
       .search('author:TheFizFactor @tiyo/core', '', 1)
-      .then((results: any) => {
+      .then((results: AkiSearchResult) => {
         if (results.objects.length > 0) {
           setAvailableTiyoVersion(results.objects[0].package.version);
         }
