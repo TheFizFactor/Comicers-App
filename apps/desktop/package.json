@@ -35,6 +35,13 @@
         "filter": ["**/*"]
       }
     ],
+    "extraResources": [
+      {
+        "from": "../../packages/ui/dist",
+        "to": "ui/dist",
+        "filter": ["**/*"]
+      }
+    ],
     "nodeGypRebuild": false,
     "mac": {
       "target": ["dmg"],
@@ -50,7 +57,11 @@
     "publish": {
       "provider": "github",
       "releaseType": "draft"
-    }
+    },
+    "excludeFiles": [
+      "**/.turbo/**/*",
+      "**/node_modules/.turbo/**/*"
+    ]
   },
   "repository": {
     "type": "git",
