@@ -8,39 +8,60 @@
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
-    "build:ui": "cd ../../packages/ui && pnpm build && mkdir -p ../desktop/resources/ui/dist && cp -r dist/* ../desktop/resources/ui/dist/",
+    "build:ui": "cd ../../packages/ui && pnpm build && node ../../apps/desktop/scripts/copy-ui-files.js",
     "prepare-dist": "pnpm run build && pnpm run build:ui",
+    "bundle": "pnpm run prepare-dist && pnpm run transform-ui && node ./scripts/bundle-for-electron.js && pnpm run restore-ui",
+    "clean-cache": "node ./scripts/clean-cache.js",
+    "build:admin": "node ./scripts/run-as-admin.js",
+    "transform-ui": "node ./scripts/transform-client-directives.js",
+    "restore-ui": "node ./scripts/restore-client-directives.js",
     "preview": "electron-vite preview",
     "lint": "biome lint src",
-    "dist:win": "pnpm run prepare-dist && cross-env ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES=1 npm_config_build_from_source=false npm_config_msvs_version=2022 pnpm electron-builder --config.nodeModulesPath=false --publish onTagOrDraft --win",
-    "dist:mac": "pnpm run prepare-dist && pnpm electron-builder --config.nodeModulesPath=false --publish onTagOrDraft --mac",
-    "dist:linux": "pnpm run prepare-dist && pnpm electron-builder --config.nodeModulesPath=false --publish onTagOrDraft --linux"
+    "dist:win": "pnpm clean-cache && pnpm run bundle && cross-env ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES=1 CSC_IDENTITY_AUTO_DISCOVERY=false WIN_CSC_LINK= npm_config_build_from_source=false npm_config_msvs_version=2019 pnpm electron-builder --win --config.win.sign=false --config.win.signAndEditExecutable=false",
+    "dist:mac": "pnpm run bundle && pnpm electron-builder --config.asar=true",
+    "dist:linux": "pnpm run bundle && pnpm electron-builder --config.asar=true"
   },
   "build": {
     "productName": "Comicers",
     "appId": "org.comicers.desktop",
     "files": [
-      "dist/**/*",
       "out/**/*",
       "resources/**/*",
       "package.json"
     ],
-    "asar": true,
-    "asarUnpack": ["**/*.node"],
     "directories": {
       "buildResources": "resources",
       "output": "dist"
     },
-    "nodeGypRebuild": false,
+    "asar": true,
+    "asarUnpack": [
+      "**/*.node"
+    ],
     "mac": {
-      "target": ["dmg"],
+      "target": [
+        "dmg"
+      ],
       "category": "public.app-category.entertainment"
     },
     "win": {
-      "target": ["nsis"]
+      "target": [
+        "nsis"
+      ],
+      "artifactName": "${productName}-${version}-win.${ext}",
+      "icon": "resources/icon.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "deleteAppDataOnUninstall": false
     },
     "linux": {
-      "target": ["AppImage", "deb", "rpm"],
+      "target": [
+        "AppImage",
+        "deb",
+        "rpm"
+      ],
       "category": "Entertainment",
       "executableName": "comicers",
       "desktop": {
@@ -85,7 +106,6 @@
   ],
   "homepage": "https://comicers.org",
   "dependencies": {
-    "@comicers/ui": "workspace:*",
     "@radix-ui/react-accordion": "1.2.3",
     "@radix-ui/react-alert-dialog": "1.1.6",
     "@radix-ui/react-checkbox": "1.1.4",
@@ -147,6 +167,7 @@
     "@types/discord-rpc": "4.0.9",
     "@types/enzyme": "3.10.18",
     "@types/enzyme-adapter-react-16": "1.0.9",
+    "@types/fs-extra": "^11.0.4",
     "@types/history": "4.7.9",
     "@types/jsdom": "20.0.1",
     "@types/mousetrap": "1.6.15",
@@ -166,6 +187,8 @@
     "electron-builder": "25.1.8",
     "electron-debug": "3.2.0",
     "electron-vite": "2.3.0",
+    "fs-extra": "^11.3.0",
+    "glob": "^11.0.1",
     "postcss": "8.5.3",
     "tailwindcss": "3.4.17",
     "typescript": "5.8.2",
@@ -182,6 +205,6 @@
     "runtime": "electron",
     "target": "32.3.3",
     "arch": "x64",
-    "msvs_version": "2022"
+    "msvs_version": "2019"
   }
 }

@@ -1,104 +1,21 @@
 name: Build + Lint
-permissions:
-  contents: read
-  pull-requests: write
-
 on: [push, pull_request]
-
 jobs:
   build:
     strategy:
       matrix:
         node: ['22']
-        os: [macos-latest, windows-latest]
+        os: [macos-latest]
     runs-on: ${{ matrix.os }}
-    env:
-      ELECTRON_BUILDER_CACHE: ${{ github.workspace }}/.cache/electron-builder
     steps:
       - uses: actions/checkout@v4
-      
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 9.0.0
-          
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: 'pnpm'
-          
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      
-      # Use Microsoft's official setup-msbuild action for Windows
-      - name: Setup Visual Studio
-        if: matrix.os == 'windows-latest'
-        uses: microsoft/setup-msbuild@v1.1
-          
-      # Configure Windows build environment properly
-      - name: Configure Windows build environment
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
-        run: |
-          $buildDir = Join-Path $env:RUNNER_TEMP "build_logs"
-          New-Item -Path $buildDir -ItemType Directory -Force
-          
-          # Set environment variables for MSBuild
-          echo "CL=/MP" >> $env:GITHUB_ENV
-          echo "TrackFileAccess=false" >> $env:GITHUB_ENV
-          echo "UseMultiToolTask=true" >> $env:GITHUB_ENV
-          echo "TRACKING_FOLDER=$buildDir" >> $env:GITHUB_ENV
-          
-          # Set node-gyp environment variables instead of using npm config
-          echo "GYP_MSVS_VERSION=2022" >> $env:GITHUB_ENV
-          echo "PYTHON=python3" >> $env:GITHUB_ENV
-      
-      - name: Cache Node modules
-        uses: actions/cache@v3
-        with:
-          path: ${{ runner.os == 'Windows' && '.pnpm-store\v3' || '~/.pnpm-store' }}
-          key: ${{ runner.os }}-node-cache-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-node-cache-
-            
-      - name: Cache Electron
-        uses: actions/cache@v3
-        with:
-          path: |
-            ${{ runner.os == 'Windows' && '${{ env.LOCALAPPDATA }}\electron\Cache' || '~/Library/Caches/electron' }}
-            ${{ runner.os == 'Windows' && '${{ env.LOCALAPPDATA }}\electron-builder\Cache' || '~/Library/Caches/electron-builder' }}
-          key: ${{ runner.os }}-electron-cache-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-electron-cache-
-            
-      - name: Create pnpm store directory
-        shell: pwsh
-        run: New-Item -Path ".pnpm-store\v3" -ItemType Directory -Force
-        
-      - name: Clean pnpm store
-        run: pnpm store prune || true
-        
-      # Set environment variables for Windows native module build
-      - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile --fetch-timeout 600000
-        env:
-          ELECTRON_BUILDER_BINARIES_MIRROR: https://npmmirror.com/mirrors/electron-builder-binaries/
-          GYP_MSVS_VERSION: 2022
-          GYP_MSVS_OVERRIDE_PATH: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise"
-          
-      # Set appropriate environment variables for the build process
-      - name: Build
-        run: pnpm build
-        env:
-          NODE_OPTIONS: "--max_old_space_size=4096"
-          ELECTRON_BUILDER_BINARIES_MIRROR: https://npmmirror.com/mirrors/electron-builder-binaries/
-          GYP_MSVS_VERSION: 2022
-          GYP_MSVS_OVERRIDE_PATH: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise"
-          PreferredToolArchitecture: x64
-          VisualStudioVersion: 17
-          UseEnv: true
-          
-      - name: Lint
-        run: pnpm lint
+      - run: pnpm install
+      - run: pnpm build
+      - run: pnpm lint
