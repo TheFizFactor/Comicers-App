@@ -1,8 +1,18 @@
+# Publish workflow - Creates draft releases for all builds
 name: Publish
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  packages: write
+  pages: write
+  id-token: write
 on:
   push:
     branches:
       - main
+    tags:
+      - 'v*'
 jobs:
   publish-win:
     strategy:
@@ -19,10 +29,113 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-      - run: pnpm i
-      - run: pnpm dist:win
+          cache: 'pnpm'
+      
+      # Add Visual Studio setup specifically for native module builds
+      - name: Setup Visual Studio
+        uses: microsoft/setup-msbuild@v1.1
+        with:
+          vs-version: '[17.0,18.0)'
+          
+      - name: Install Visual Studio C++ workload
+        run: |
+          & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vs_installer.exe" modify `
+            --installPath "C:\Program Files\Microsoft Visual Studio\2022\Enterprise" `
+            --add Microsoft.VisualStudio.Workload.NativeDesktop `
+            --includeRecommended `
+            --quiet --norestart --force
+          
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Python dependencies
+        run: pip install setuptools
+          
+      # Cache electron binaries to speed up builds
+      - name: Cache Electron
+        uses: actions/cache@v3
+        with:
+          path: |
+            ${{ runner.temp }}\electron\Cache
+            ${{ runner.temp }}\electron-builder\Cache
+          key: ${{ runner.os }}-electron-cache-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-electron-cache-
+      
+      # First install all dependencies using pnpm, including workspace packages
+      - name: Install all dependencies with pnpm
+        run: |
+          pnpm install --no-frozen-lockfile --fetch-timeout 600000
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
+          
+      # Then install native modules separately in the desktop app directory
+      - name: Install native modules
+        run: |
+          cd apps/desktop
+          pnpm remove bufferutil utf-8-validate register-scheme
+          pnpm add bufferutil@4.0.9 utf-8-validate@6.0.5
+          pnpm add register-scheme@0.0.2 --save-optional
+        env:
+          npm_config_build_from_source: false
+          NODE_VERSION: ${{ matrix.node }}
+          npm_config_msvs_version: 2022
+          
+      # Build the app
+      - name: Build app
+        run: pnpm build
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          npm_config_msvs_version: 2022
+      
+      # Package with modified environment variables
+      - name: Package Windows app
+        run: |
+          cd apps/desktop && pnpm dist:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_OPTIONS: "--max_old_space_size=4096"
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          npm_config_build_from_source: false
+          NODE_VERSION: ${{ matrix.node }}
+          npm_config_msvs_version: 2022
+
+  create-release:
+    needs: [publish-win, publish-linux, publish-mac]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Get or create tag
+        id: tag
+        run: |
+          if [[ ! ${{ github.ref }} =~ ^refs/tags/ ]]; then
+            # Get latest tag
+            latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+            # Increment patch version
+            new_tag=$(echo $latest_tag | awk -F. -v OFS=. '{$NF++;print}')
+            echo "Creating new tag: $new_tag"
+            git tag $new_tag
+            git push origin $new_tag
+            echo "tag=$new_tag" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: Release ${{ steps.tag.outputs.tag }}
+          generate_release_notes: true
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   publish-linux:
     strategy:
       matrix:
@@ -38,10 +151,27 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-      - run: pnpm i
-      - run: pnpm dist:linux
+          cache: 'pnpm'
+      - name: Cache Electron
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/electron
+            ~/.cache/electron-builder
+          key: ${{ runner.os }}-electron-cache-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-electron-cache-
+      - name: Create pnpm store directory
+        run: mkdir -p $(pnpm store path)
+      - name: Clean pnpm store
+        run: pnpm store prune || true
+      - name: Install dependencies
+        run: pnpm i --no-frozen-lockfile --fetch-timeout 600000
+      - name: Build and package Linux app
+        run: pnpm dist:linux
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_OPTIONS: "--max_old_space_size=4096"
   publish-mac:
     strategy:
       matrix:
@@ -57,11 +187,63 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-      - run: pnpm i
-      - run: pnpm dist:mac
+          cache: 'pnpm'
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Python dependencies
+        run: pip install setuptools
+      - name: Cache Electron
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/Library/Caches/electron
+            ~/Library/Caches/electron-builder
+          key: ${{ runner.os }}-electron-cache-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-electron-cache-
+      - name: Create pnpm store directory
+        run: mkdir -p $(pnpm store path)
+      - name: Clean pnpm store
+        run: pnpm store prune || true
+      - name: Install dependencies
+        run: pnpm i --no-frozen-lockfile --fetch-timeout 600000
+      - name: Build and package macOS app
+        run: pnpm dist:mac
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_OPTIONS: "--max_old_space_size=4096"
           # APPLE_ID: ${{ secrets.APPLE_ID }}
           # APPLE_ID_PASS: ${{ secrets.APPLE_ID_PASS }}
           # CSC_LINK: ${{ secrets.CSC_LINK }}
           # CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+  publish-docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.0.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm i --no-frozen-lockfile
+      - name: Install docs dependencies
+        run: cd apps/docs && pnpm i
+      - name: Build docs
+        run: cd apps/docs && pnpm build
+      - name: Create CNAME file in dist directory
+        run: echo "comicers.org" > apps/docs/src/.vitepress/dist/CNAME
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./apps/docs/src/.vitepress/dist
+          force_orphan: true # This creates a clean gh-pages branch without history

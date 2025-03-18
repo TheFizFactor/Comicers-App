@@ -4,8 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "lint": "biome lint src",
-    "build": "tsc"
+    "lint": "biome lint src"
   },
   "exports": {
     ".": "./src/index.ts",

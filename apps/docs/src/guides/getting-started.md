@@ -28,17 +28,6 @@ a series to add to your library.
 For more info, see [Adding from Websites](./adding-content/websites)
 :::
 
-## Library Management
-
-Comicers offers powerful features to organize and manage your manga library:
-- Create reading lists and favorites
-- Track reading history
-- Filter and sort chapters
-- Multiple library views
-- Bulk operations
-
-See [Advanced Library Features](./library-features) for a complete guide to library management.
-
 ## Customizing
 
 Configure Comicers from the `Settings` page.
@@ -48,6 +37,7 @@ Configure Comicers from the `Settings` page.
 - **Trackers:** Sync your reading with tracking websites like AniList and MyAnimeList. Learn more [about trackers](./trackers).
 - **Integrations:** Connect with Discord to sync your status.
 - **Reading List:** Import and export your reading progress. Learn more about [reading list management](./reading-list).
+- **Experimental:** Try out cutting-edge features that are still in development. Learn more about [experimental features](./experimental-features).
 
 ## Offline downloading
 

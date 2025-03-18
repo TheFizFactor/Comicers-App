@@ -280,7 +280,7 @@ export default function App() {
               <AlertDialogFooter>
                 <AlertDialogCancel disabled={isDownloading}>Not now</AlertDialogCancel>
                 
-                <Select onValueChange={(value: string) => handleScheduleUpdate(Number(value))}>
+                <Select onValueChange={(value) => handleScheduleUpdate(Number(value))}>
                   <SelectTrigger className="w-[180px]" disabled={isDownloading}>
                     <ClockIcon className="mr-2 h-4 w-4" />
                     <SelectValue placeholder="Schedule..." />

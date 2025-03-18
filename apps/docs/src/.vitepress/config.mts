@@ -39,6 +39,8 @@ export default defineConfig({
           { text: 'Customize', link: '/guides/customize' },
           { text: 'Offline Downloading', link: '/guides/offline-download' },
           { text: 'Trackers', link: '/guides/trackers' },
+          { text: 'Reading List Management', link: '/guides/reading-list' },
+          { text: 'Experimental Features', link: '/guides/experimental-features' },
         ],
       },
     ],
