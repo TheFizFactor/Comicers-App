@@ -44,7 +44,6 @@ export default defineConfig({
         input: {
           index: path.join(__dirname, 'src/renderer/index.html'),
         },
-        external: ['@comicers/ui'],
       },
     },
     plugins: [
