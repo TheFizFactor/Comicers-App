@@ -10,7 +10,11 @@ permissions:
 on:
   push:
     branches:
-      - master
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
 jobs:
   publish-win:
     strategy:
@@ -129,6 +133,8 @@ jobs:
         run: |
           git tag -a "v${{ steps.get_version.outputs.version }}" -m "Release v${{ steps.get_version.outputs.version }}"
           git push origin "v${{ steps.get_version.outputs.version }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download Windows build
         uses: actions/download-artifact@v4
