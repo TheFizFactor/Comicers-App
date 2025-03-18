@@ -2,7 +2,7 @@
 
 [![comicers.org](https://img.shields.io/badge/website-comicers.org-7048E8?style=flat-square)](https://comicers.org)
 [![GitHub release](https://img.shields.io/github/v/release/TheFizFactor/Comicers-App?style=flat-square)](https://github.com/TheFizFactor/Comicers-App/releases)
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/TheFizFactor/Comicers-App/publish.yml?branch=master&style=flat-square)
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/TheFizFactor/Comicers-App/publish.yml?branch=main&style=flat-square)
 
 Comicers is a free and open source manga reader for the desktop.
 
@@ -65,4 +65,4 @@ To learn about Tiyo or request a new content source, please contact me at fiz@co
 
 ## License
 
-[MIT License](https://github.com/TheFizFactor/Comicers-App/blob/master/LICENSE.txt)
+[MIT License](https://github.com/TheFizFactor/Comicers-App/blob/main/LICENSE.txt)
