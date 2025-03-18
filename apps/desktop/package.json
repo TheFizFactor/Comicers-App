@@ -63,7 +63,18 @@
         "MimeType": "application/x-cbr;application/x-cbz;application/x-rar;application/zip;application/x-7z-compressed"
       },
       "artifactName": "${productName}-${version}.${ext}",
-      "depends": ["libgtk-3-0", "libnotify4", "libnss3", "libxss1", "libxtst6", "xdg-utils"]
+      "packageCategory": "graphics",
+      "maintainer": "Arnis <fiz@comicers.com>",
+      "vendor": "Comicers",
+      "description": "Manga reader and library manager for the desktop",
+      "synopsis": "Manga reader and library manager",
+      "extraResources": [
+        {
+          "from": "../../packages/ui/dist",
+          "to": "ui/dist",
+          "filter": ["**/*"]
+        }
+      ]
     },
     "publish": {
       "provider": "github",
