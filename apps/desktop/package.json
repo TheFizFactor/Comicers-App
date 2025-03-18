@@ -20,7 +20,9 @@
     "appId": "org.comicers.desktop",
     "files": [
       "dist/**/*",
-      "node_modules/**/*"
+      "node_modules/**/*",
+      "!**/.turbo/**/*",
+      "!**/node_modules/.turbo/**/*"
     ],
     "asar": true,
     "asarUnpack": ["**/*.node"],
@@ -57,11 +59,7 @@
     "publish": {
       "provider": "github",
       "releaseType": "draft"
-    },
-    "excludeFiles": [
-      "**/.turbo/**/*",
-      "**/node_modules/.turbo/**/*"
-    ]
+    }
   },
   "repository": {
     "type": "git",
