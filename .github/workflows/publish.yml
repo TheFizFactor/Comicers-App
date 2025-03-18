@@ -1,18 +1,9 @@
 # Publish workflow - Creates draft releases for all builds
 name: Publish
-permissions:
-  contents: write
-  issues: write
-  pull-requests: write
-  packages: write
-  pages: write
-  id-token: write
 on:
   push:
     branches:
-      - main
-    tags:
-      - 'v*'
+      - master
 jobs:
   publish-win:
     strategy:
@@ -29,78 +20,68 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: 'pnpm'
-      
-      # Add Visual Studio setup specifically for native module builds
-      - name: Setup Visual Studio
-        uses: microsoft/setup-msbuild@v1.1
-        with:
-          vs-version: '[17.0,18.0)'
-          
-      - name: Install Visual Studio C++ workload
-        run: |
-          & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vs_installer.exe" modify `
-            --installPath "C:\Program Files\Microsoft Visual Studio\2022\Enterprise" `
-            --add Microsoft.VisualStudio.Workload.NativeDesktop `
-            --includeRecommended `
-            --quiet --norestart --force
-          
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Install Python dependencies
-        run: pip install setuptools
-          
-      # Cache electron binaries to speed up builds
-      - name: Cache Electron
-        uses: actions/cache@v3
-        with:
-          path: |
-            ${{ runner.temp }}\electron\Cache
-            ${{ runner.temp }}\electron-builder\Cache
-          key: ${{ runner.os }}-electron-cache-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-electron-cache-
-      
-      # First install all dependencies using pnpm, including workspace packages
-      - name: Install all dependencies with pnpm
-        run: |
-          pnpm install --no-frozen-lockfile --fetch-timeout 600000
-        env:
-          NODE_OPTIONS: "--max_old_space_size=4096"
-          
-      # Then install native modules separately in the desktop app directory
-      - name: Install native modules
-        run: |
-          cd apps/desktop
-          pnpm remove bufferutil utf-8-validate register-scheme
-          pnpm add bufferutil@4.0.9 utf-8-validate@6.0.5
-          pnpm add register-scheme@0.0.2 --save-optional
-        env:
-          npm_config_build_from_source: false
-          NODE_VERSION: ${{ matrix.node }}
-          npm_config_msvs_version: 2022
-          
-      # Build the app
-      - name: Build app
-        run: pnpm build
-        env:
-          NODE_OPTIONS: "--max_old_space_size=4096"
-          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
-          npm_config_msvs_version: 2022
-      
-      # Package with modified environment variables
-      - name: Package Windows app
-        run: |
-          cd apps/desktop && pnpm dist:win
+      - run: pnpm i
+      - run: pnpm dist:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_OPTIONS: "--max_old_space_size=4096"
-          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
-          npm_config_build_from_source: false
-          NODE_VERSION: ${{ matrix.node }}
-          npm_config_msvs_version: 2022
+
+  publish-linux:
+    strategy:
+      matrix:
+        node: ['22']
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.0.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      # Add minimal Linux build dependencies
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtk-3-0 \
+            libnotify4 \
+            libnss3 \
+            libxss1 \
+            libxtst6 \
+            xdg-utils \
+            libgconf2-4 \
+            libsecret-1-dev \
+            build-essential
+      - run: pnpm i
+      - run: pnpm dist:linux
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-mac:
+    strategy:
+      matrix:
+        node: ['22']
+        os: [macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.0.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: pnpm i
+      - run: pnpm dist:mac
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # APPLE_ID: ${{ secrets.APPLE_ID }}
+          # APPLE_ID_PASS: ${{ secrets.APPLE_ID_PASS }}
+          # CSC_LINK: ${{ secrets.CSC_LINK }}
+          # CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
 
   create-release:
     needs: [publish-win, publish-linux, publish-mac]
@@ -136,196 +117,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  publish-linux:
-    strategy:
-      matrix:
-        node: ['22']
-        os: [ubuntu-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9.0.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node }}
-          cache: 'pnpm'
-      # Add Linux build dependencies
-      - name: Install Linux build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libgtk-3-0 \
-            libnotify4 \
-            libnss3 \
-            libxss1 \
-            libxtst6 \
-            xdg-utils \
-            rpm \
-            dpkg \
-            dpkg-dev \
-            fakeroot \
-            rpm \
-            libdbus-glib-1-dev \
-            libx11-dev \
-            libx11-xcb-dev \
-            libxcb1-dev \
-            libxcb-dri2-0-dev \
-            libxcb-dri3-dev \
-            libxcb-randr0-dev \
-            libxcb-render0-dev \
-            libxcb-shape0-dev \
-            libxcb-sync-dev \
-            libxcb-xfixes0-dev \
-            libxcb-xinerama0-dev \
-            libxcb-xkb-dev \
-            libxkbcommon-dev \
-            libxkbcommon-x11-dev \
-            libxrender-dev \
-            libasound2-dev \
-            libatk1.0-dev \
-            libatk-bridge2.0-dev \
-            libcups2-dev \
-            libdrm-dev \
-            libexpat1-dev \
-            libgbm-dev \
-            libgdk-pixbuf2.0-dev \
-            libglib2.0-dev \
-            libgtk-3-dev \
-            libnspr4-dev \
-            libnss3-dev \
-            libpango1.0-dev \
-            libpangocairo-1.0-0 \
-            libx11-6 \
-            libx11-xcb1 \
-            libxcb1 \
-            libxcomposite1 \
-            libxcursor1 \
-            libxdamage1 \
-            libxext6 \
-            libxfixes3 \
-            libxi6 \
-            libxrandr2 \
-            libxrender1 \
-            libxss1 \
-            libxtst6 \
-            libxxf86vm1 \
-            build-essential \
-            libgconf2-4 \
-            libsecret-1-dev \
-            libx11-dev \
-            libx11-xcb-dev \
-            libxcb1-dev \
-            libxcb-dri2-0-dev \
-            libxcb-dri3-dev \
-            libxcb-randr0-dev \
-            libxcb-render0-dev \
-            libxcb-shape0-dev \
-            libxcb-sync-dev \
-            libxcb-xfixes0-dev \
-            libxcb-xinerama0-dev \
-            libxcb-xkb-dev \
-            libxkbcommon-dev \
-            libxkbcommon-x11-dev \
-            libxrender-dev \
-            libasound2-dev \
-            libatk1.0-dev \
-            libatk-bridge2.0-dev \
-            libcups2-dev \
-            libdrm-dev \
-            libexpat1-dev \
-            libgbm-dev \
-            libgdk-pixbuf2.0-dev \
-            libglib2.0-dev \
-            libgtk-3-dev \
-            libnspr4-dev \
-            libnss3-dev \
-            libpango1.0-dev \
-            libpangocairo-1.0-0 \
-            libx11-6 \
-            libx11-xcb1 \
-            libxcb1 \
-            libxcomposite1 \
-            libxcursor1 \
-            libxdamage1 \
-            libxext6 \
-            libxfixes3 \
-            libxi6 \
-            libxrandr2 \
-            libxrender1 \
-            libxss1 \
-            libxtst6 \
-            libxxf86vm1
-      - name: Cache Electron
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/electron
-            ~/.cache/electron-builder
-          key: ${{ runner.os }}-electron-cache-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-electron-cache-
-      - name: Create pnpm store directory
-        run: mkdir -p $(pnpm store path)
-      - name: Clean pnpm store
-        run: pnpm store prune || true
-      - name: Install dependencies
-        run: pnpm i --no-frozen-lockfile --fetch-timeout 600000
-      - name: Build and package Linux app
-        run: pnpm dist:linux
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_OPTIONS: "--max_old_space_size=4096"
-          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
-
-  publish-mac:
-    strategy:
-      matrix:
-        node: ['22']
-        os: [macos-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9.0.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node }}
-          cache: 'pnpm'
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Install Python dependencies
-        run: pip install setuptools
-      - name: Cache Electron
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/Library/Caches/electron
-            ~/Library/Caches/electron-builder
-          key: ${{ runner.os }}-electron-cache-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-electron-cache-
-      - name: Create pnpm store directory
-        run: mkdir -p $(pnpm store path)
-      - name: Clean pnpm store
-        run: pnpm store prune || true
-      - name: Install dependencies
-        run: pnpm i --no-frozen-lockfile --fetch-timeout 600000
-      - name: Build and package macOS app
-        run: pnpm dist:mac
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_OPTIONS: "--max_old_space_size=4096"
-          # APPLE_ID: ${{ secrets.APPLE_ID }}
-          # APPLE_ID_PASS: ${{ secrets.APPLE_ID_PASS }}
-          # CSC_LINK: ${{ secrets.CSC_LINK }}
-          # CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
   publish-docs:
     runs-on: ubuntu-latest
     permissions:
