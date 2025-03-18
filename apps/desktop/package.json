@@ -36,7 +36,6 @@
         "filter": ["**/*"]
       }
     ],
-    "externals": ["@comicers/ui"],
     "nodeGypRebuild": false,
     "mac": {
       "target": ["dmg"],
