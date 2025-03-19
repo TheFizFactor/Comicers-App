@@ -17,7 +17,7 @@
   },
   "build": {
     "productName": "comicers",
-    "appId": "com.comicers.app",
+    "appId": "org.comicers.app",
     "asar": true,
     "files": [
       "out/**/*",
@@ -49,11 +49,13 @@
       "output": "dist"
     },
     "nodeGypRebuild": false,
+    "icon": "assets/icon",
     "mac": {
       "target": [
         "dmg"
       ],
-      "category": "public.app-category.entertainment"
+      "category": "public.app-category.graphics-design",
+      "icon": "assets/icon.icns"
     },
     "win": {
       "target": [
@@ -66,7 +68,8 @@
       ],
       "sign": false,
       "artifactName": "${productName}-Setup-${version}.${ext}",
-      "publisherName": "Comicers"
+      "publisherName": "Comicers",
+      "icon": "assets/icon.png"
     },
     "linux": {
       "target": [
@@ -74,13 +77,14 @@
         "deb",
         "rpm"
       ],
-      "category": "Entertainment",
+      "category": "Graphics",
       "artifactName": "${productName}-${version}.${ext}",
       "desktop": {
         "Name": "Comicers",
         "Comment": "Manga reader and library manager",
         "Categories": "Utility;TextEditor;Office;Graphics;Viewer;"
-      }
+      },
+      "icon": "assets/icon.png"
     },
     "publish": {
       "provider": "github",
