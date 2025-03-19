@@ -1,6 +1,4 @@
-import { Octokit } from '@octokit/core'
-
-const octokit = new Octokit()
+import fetch from 'node-fetch'
 
 interface Asset {
   name: string
@@ -19,12 +17,18 @@ interface ReleaseData {
 
 export async function load(): Promise<{ release: ReleaseData | null }> {
   try {
-    const response = await fetch('https://api.github.com/repos/TheFizFactor/Comicers-App/releases/latest')
-    const data = await response.json()
+    const response = await fetch('https://api.github.com/repos/TheFizFactor/Comicers-App/releases/latest', {
+      headers: {
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'Comicers-Docs'
+      }
+    })
 
     if (!response.ok) {
       throw new Error(`GitHub API responded with ${response.status}`)
     }
+
+    const data = await response.json()
 
     // Process assets to determine platform
     const assets = data.assets.map((asset: any) => {
