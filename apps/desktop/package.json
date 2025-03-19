@@ -1,6 +1,6 @@
 {
   "name": "@comicers/desktop",
-  "productName": "Comicers",
+  "productName": "comicers",
   "description": "Manga reader and library manager for the desktop",
   "version": "2.17.2",
   "private": true,
@@ -13,11 +13,11 @@
     "dist": "npm run build && electron-builder",
     "dist:win": "cross-env ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES=1 npm_config_build_from_source=false npm_config_msvs_version=2022 pnpm electron-builder --publish onTagOrDraft --win",
     "dist:mac": "npm run build && electron-builder --mac",
-    "dist:linux": "npm run build && electron-builder --linux",
+    "dist:linux": "npm run build && electron-builder --linux --publish never",
     "lint": "biome lint src"
   },
   "build": {
-    "productName": "Comicers",
+    "productName": "comicers",
     "appId": "com.comicers.app",
     "asar": true,
     "files": [
@@ -63,11 +63,17 @@
     },
     "linux": {
       "target": ["AppImage", "deb", "rpm"],
-      "category": "Entertainment"
+      "category": "Entertainment",
+      "artifactName": "${productName}-${version}.${ext}",
+      "desktop": {
+        "Name": "Comicers",
+        "Comment": "Manga reader and library manager",
+        "Categories": "Utility;TextEditor;Office;Graphics;Viewer;"
+      }
     },
     "publish": {
       "provider": "github",
-      "releaseType": "draft"
+      "releaseType": "release"
     },
     "nsis": {
       "oneClick": true,
