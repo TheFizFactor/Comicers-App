@@ -11,5 +11,8 @@
     "dev": "vitepress dev src",
     "build": "vitepress build src",
     "preview": "vitepress preview src"
+  },
+  "dependencies": {
+    "@octokit/rest": "^21.1.1"
   }
 }

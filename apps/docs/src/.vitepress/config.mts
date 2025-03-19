@@ -56,4 +56,9 @@ export default defineConfig({
       md.use(tabsMarkdownPlugin);
     },
   },
+  vite: {
+    optimizeDeps: {
+      include: ['@octokit/rest']
+    }
+  }
 });

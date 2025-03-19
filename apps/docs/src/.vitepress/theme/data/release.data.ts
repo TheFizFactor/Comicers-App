@@ -1,88 +1,57 @@
-interface ReleaseAsset {
-  platform: string;
-  name: string;
-  browser_download_url: string;
-  buildTimeStr: string;
+import { Octokit } from '@octokit/rest'
+
+const octokit = new Octokit()
+
+interface Asset {
+  name: string
+  browser_download_url: string
+  created_at: string
+  platform: string
 }
 
-export interface Release {
-  version: string;
-  releaseDateStr: string;
-  releaseDaysAgo: number;
-  assets: ReleaseAsset[];
+export interface ReleaseData {
+  version: string
+  releaseDateStr: string
+  releaseDaysAgo: number
+  assets: Asset[]
 }
 
-const defaultRelease: Release = {
-  version: '0.0.0',
-  releaseDateStr: new Date().toLocaleDateString(),
-  releaseDaysAgo: 0,
-  assets: []
-};
+export async function load(): Promise<ReleaseData> {
+  try {
+    const { data } = await octokit.repos.getLatestRelease({
+      owner: 'TheFizFactor',
+      repo: 'Comicers-App'
+    })
 
-// For VitePress data loading format
-export default {
-  async load() {
-    const data = { ...defaultRelease };
-    
-    try {
-      const response = await fetch('https://api.github.com/repos/TheFizFactor/Comicers-App/releases/latest');
-      if (!response.ok) {
-        return data;
+    const releaseDate = new Date(data.published_at || data.created_at)
+    const daysAgo = Math.floor((Date.now() - releaseDate.getTime()) / (1000 * 60 * 60 * 24))
+
+    const assets = data.assets.map(asset => {
+      let platform = 'Unknown'
+      if (asset.name.includes('win') || asset.name.endsWith('.exe')) {
+        platform = 'Windows'
+      } else if (asset.name.includes('mac') || asset.name.endsWith('.dmg')) {
+        platform = 'macOS'
+      } else if (asset.name.includes('linux') || asset.name.endsWith('.AppImage') || asset.name.endsWith('.deb') || asset.name.endsWith('.rpm')) {
+        platform = 'Linux'
       }
 
-      const release = await response.json();
-      const date = new Date(release.published_at);
-      
-      // Safely find assets
-      const findAsset = (pattern: RegExp) => 
-        release.assets?.find((asset: any) => pattern.test(asset.name)) || null;
-
-      const assets = {
-        windows: findAsset(/Comicers-Setup-.*\.exe$/),
-        mac: findAsset(/\.dmg$/),
-        linux: findAsset(/\.AppImage$/)
-      };
-
-      // Only include assets that were found
-      const validAssets: ReleaseAsset[] = [];
-
-      if (assets.windows) {
-        validAssets.push({
-          platform: 'Windows',
-          name: assets.windows.name,
-          browser_download_url: assets.windows.browser_download_url,
-          buildTimeStr: new Date(assets.windows.updated_at).toISOString()
-        });
+      return {
+        name: asset.name,
+        browser_download_url: asset.browser_download_url,
+        created_at: new Date(asset.created_at).toLocaleDateString(),
+        platform
       }
+    })
 
-      if (assets.mac && assets.mac.name) {
-        validAssets.push({
-          platform: 'macOS',
-          name: assets.mac.name,
-          browser_download_url: assets.mac.browser_download_url,
-          buildTimeStr: new Date(assets.mac.updated_at).toISOString()
-        });
-      }
-
-      if (assets.linux && assets.linux.name) {
-        validAssets.push({
-          platform: 'Linux',
-          name: assets.linux.name,
-          browser_download_url: assets.linux.browser_download_url,
-          buildTimeStr: new Date(assets.linux.updated_at).toISOString()
-        });
-      }
-
-      // Update the data object
-      data.version = release.tag_name?.replace('v', '') || defaultRelease.version;
-      data.releaseDateStr = date.toLocaleDateString();
-      data.releaseDaysAgo = Math.round((new Date().getTime() - date.getTime()) / (1000 * 3600 * 24));
-      data.assets = validAssets;
-
-      return data;
-    } catch (error) {
-      console.error('Failed to load release data:', error);
-      return data;
+    return {
+      version: data.tag_name.replace(/^v/, ''),
+      releaseDateStr: releaseDate.toLocaleDateString(),
+      releaseDaysAgo: daysAgo,
+      assets
     }
+  } catch (error) {
+    console.error('Failed to fetch release data:', error)
+    throw error
   }
-};
+}
