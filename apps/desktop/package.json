@@ -76,7 +76,18 @@
       "repo": "Comicers-App",
       "releaseType": "draft",
       "vPrefixedTagName": true,
-      "private": false
+      "private": false,
+      "publishAutoUpdate": true,
+      "releaseNotes": "New release",
+      "verifyUpdateCodeSignature": false,
+      "uploadAssets": [
+        "dist/*.exe",
+        "dist/*.dmg",
+        "dist/*.AppImage",
+        "dist/*.deb",
+        "dist/*.rpm",
+        "dist/latest*.yml"
+      ]
     },
     "nsis": {
       "oneClick": true,
