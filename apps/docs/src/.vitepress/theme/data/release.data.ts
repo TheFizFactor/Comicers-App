@@ -15,7 +15,7 @@ interface ReleaseData {
   assets: Asset[]
 }
 
-export async function load(): Promise<{ release: ReleaseData | null }> {
+async function loadRelease(): Promise<{ release: ReleaseData | null }> {
   try {
     const response = await fetch('https://api.github.com/repos/TheFizFactor/Comicers-App/releases/latest', {
       headers: {
@@ -66,5 +66,11 @@ export async function load(): Promise<{ release: ReleaseData | null }> {
   } catch (error) {
     console.error('Failed to fetch latest release:', error)
     return { release: null }
+  }
+}
+
+export default {
+  async load() {
+    return await loadRelease()
   }
 }
