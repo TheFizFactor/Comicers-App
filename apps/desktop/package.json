@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "electron-vite dev",
     "build": "cd ../../packages/ui && pnpm build && cd ../../apps/desktop && npm run copy-ui && electron-vite build",
-    "copy-ui": "powershell -Command \"New-Item -ItemType Directory -Force -Path node_modules/@comicers/ui; Copy-Item -Force -Recurse ../../packages/ui/dist/* node_modules/@comicers/ui/\"",
+    "copy-ui": "mkdir -p node_modules/@comicers/ui && cp -r ../../packages/ui/dist/* node_modules/@comicers/ui/",
     "start": "electron-vite preview",
     "dist": "npm run build && electron-builder",
     "dist:win": "cross-env ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES=1 npm_config_build_from_source=false npm_config_msvs_version=2022 pnpm electron-builder --publish onTagOrDraft --win",
