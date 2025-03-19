@@ -58,7 +58,10 @@ export default defineConfig({
   },
   vite: {
     optimizeDeps: {
-      include: ['@octokit/rest']
+      include: ['@octokit/core']
+    },
+    ssr: {
+      noExternal: ['@octokit/core']
     }
   }
 });

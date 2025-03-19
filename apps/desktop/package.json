@@ -39,7 +39,9 @@
       {
         "from": "../../packages/ui/dist",
         "to": "packages/ui/dist",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "directories": {
@@ -48,20 +50,30 @@
     },
     "nodeGypRebuild": false,
     "mac": {
-      "target": ["dmg"],
+      "target": [
+        "dmg"
+      ],
       "category": "public.app-category.entertainment"
     },
     "win": {
-      "target": [{
-        "target": "nsis",
-        "arch": ["x64"]
-      }],
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "sign": false,
       "artifactName": "${productName}-Setup-${version}.${ext}",
       "publisherName": "Comicers"
     },
     "linux": {
-      "target": ["AppImage", "deb", "rpm"],
+      "target": [
+        "AppImage",
+        "deb",
+        "rpm"
+      ],
       "category": "Entertainment",
       "artifactName": "${productName}-${version}.${ext}",
       "desktop": {
@@ -114,6 +126,7 @@
   "homepage": "https://comicers.org",
   "dependencies": {
     "@comicers/ui": "workspace:*",
+    "@octokit/core": "^6.1.4",
     "@radix-ui/react-accordion": "1.2.3",
     "@radix-ui/react-alert-dialog": "1.1.6",
     "@radix-ui/react-checkbox": "1.1.4",

@@ -1,57 +1,64 @@
-import { Octokit } from '@octokit/rest'
+import { Octokit } from '@octokit/core'
 
 const octokit = new Octokit()
 
 interface Asset {
   name: string
   browser_download_url: string
-  created_at: string
-  platform: string
+  size: number
+  platform?: 'windows' | 'mac' | 'linux'
 }
 
-export interface ReleaseData {
+interface ReleaseData {
   version: string
-  releaseDateStr: string
-  releaseDaysAgo: number
+  name: string
+  publishedAt: string
+  daysAgo: number
   assets: Asset[]
 }
 
-export async function load(): Promise<ReleaseData> {
+export async function load(): Promise<{ release: ReleaseData | null }> {
   try {
-    const { data } = await octokit.repos.getLatestRelease({
+    const { data } = await octokit.request('GET /repos/{owner}/{repo}/releases/latest', {
       owner: 'TheFizFactor',
       repo: 'Comicers-App'
     })
 
-    const releaseDate = new Date(data.published_at || data.created_at)
-    const daysAgo = Math.floor((Date.now() - releaseDate.getTime()) / (1000 * 60 * 60 * 24))
-
+    // Process assets to determine platform
     const assets = data.assets.map(asset => {
-      let platform = 'Unknown'
-      if (asset.name.includes('win') || asset.name.endsWith('.exe')) {
-        platform = 'Windows'
-      } else if (asset.name.includes('mac') || asset.name.endsWith('.dmg')) {
-        platform = 'macOS'
-      } else if (asset.name.includes('linux') || asset.name.endsWith('.AppImage') || asset.name.endsWith('.deb') || asset.name.endsWith('.rpm')) {
-        platform = 'Linux'
-      }
-
-      return {
+      const assetData: Asset = {
         name: asset.name,
         browser_download_url: asset.browser_download_url,
-        created_at: new Date(asset.created_at).toLocaleDateString(),
-        platform
+        size: asset.size
       }
+
+      if (asset.name.endsWith('.exe')) {
+        assetData.platform = 'windows'
+      } else if (asset.name.endsWith('.dmg')) {
+        assetData.platform = 'mac'
+      } else if (asset.name.endsWith('.AppImage') || asset.name.endsWith('.deb') || asset.name.endsWith('.rpm')) {
+        assetData.platform = 'linux'
+      }
+
+      return assetData
     })
 
+    // Calculate days ago
+    const publishedDate = new Date(data.published_at || Date.now())
+    const now = new Date()
+    const daysAgo = Math.floor((now.getTime() - publishedDate.getTime()) / (1000 * 60 * 60 * 24))
+
     return {
-      version: data.tag_name.replace(/^v/, ''),
-      releaseDateStr: releaseDate.toLocaleDateString(),
-      releaseDaysAgo: daysAgo,
-      assets
+      release: {
+        version: data.tag_name,
+        name: data.name || `Release ${data.tag_name}`,
+        publishedAt: publishedDate.toLocaleDateString(),
+        daysAgo,
+        assets
+      }
     }
   } catch (error) {
-    console.error('Failed to fetch release data:', error)
-    throw error
+    console.error('Failed to fetch latest release:', error)
+    return { release: null }
   }
 }
