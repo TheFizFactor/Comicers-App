@@ -1,54 +1,155 @@
-# Getting Started
+# Getting Started with Comicers
 
-Comicers is a desktop manga reader. Read manga from your own collection or use plugins to add from external sources.
+Welcome to Comicers! This guide will help you get started with your manga reading journey.
 
-## Installation
+## What is Comicers?
 
-1. Get Comicers from the [download page](/download).
-2. Comicers will automatically prompt you when an update is available.
-3. The home page now shows update notes when new features are added.
+Comicers is a modern, feature-rich desktop manga reader that lets you:
+- Read manga from your local collection
+- Import from popular online sources
+- Track your reading progress
+- Download chapters for offline reading
+- Customize your reading experience
 
-## First steps
+## Quick Start Guide
 
-Add manga from your filesystem, or install a plugin to discover external content.
+### 1. Installation
+1. Visit the [download page](/download) to get Comicers for your platform
+2. Follow the installation instructions for your operating system
+3. Launch Comicers and complete the initial setup
+
+### 2. Adding Your First Manga
 
 :::tabs
-== Local filesystem
-To import your local collection, go to the `Explorer` page and select the `filesystem` source.
-You can import an individual series or an entire collection at once.
+== Local Collection
+To import your local manga collection:
+1. Go to the `Explorer` page
+2. Select the `filesystem` source
+3. Choose between:
+   - Importing individual series
+   - Importing an entire collection
+   - Adding specific folders
 
-For more info, see [Adding from Local Filesystem](./adding-content/filesystem)
-== External sources
-Comicers allows you to import manga from 3rd-party websites, called "content sources".
-1. **Install a plugin**. Go to the `Plugins` page and install a plugin. Plugins add support for multiple
-content sources.
-2. **Add a series**. Go to the `Explorer` page and select a source from the dropdown. Search for
-a series to add to your library.
+For detailed instructions, see [Adding from Local Filesystem](./adding-content/filesystem)
 
-For more info, see [Adding from Websites](./adding-content/websites)
+== Online Sources
+To read manga from online sources:
+1. Go to the `Plugins` page
+2. Install the Tiyo plugin (required for online sources)
+3. Go to the `Explorer` page
+4. Select your preferred source from the dropdown
+5. Search and add series to your library
+
+For detailed instructions, see [Adding from Websites](./adding-content/websites)
 :::
 
-## Customizing
+### 3. Reading Manga
+1. Open your library from the sidebar
+2. Click on any series to view its chapters
+3. Select a chapter to start reading
+4. Use the reader controls to:
+   - Navigate pages
+   - Change reading mode
+   - Adjust display settings
+   - Download for offline reading
 
-Configure Comicers from the `Settings` page.
+## Essential Features
 
-- **General:** Choose a color theme, change the library display and refresh settings, and backup your data. 
-- **Reader:** Switch between single, double, and long-strip layouts, change the image sizing, and edit keybinds. Learn more about customizing the reader.
-- **Trackers:** Sync your reading with tracking websites like AniList and MyAnimeList. Learn more [about trackers](./trackers).
-- **Integrations:** Connect with Discord to sync your status.
-- **Reading List:** Import and export your reading progress. Learn more about [reading list management](./reading-list).
-- **Experimental:** Try out cutting-edge features that are still in development. Learn more about [experimental features](./experimental-features).
+### Library Management
+- Organize your manga with tags and collections
+- Sort and filter your library
+- Track reading progress
+- Set reading priorities
 
-## Offline downloading
+### Reader Customization
+Configure your reading experience from the `Settings` page:
 
-You can use Comicers to download manga. After importing a manga to your library, go to the
-series page and click `Options` -> `Download`. You can also download specific chapters.
+:::tabs
+== Display Options
+- Choose between single, double, or long-strip layouts
+- Adjust image sizing and quality
+- Set background colors and themes
+- Configure page transitions
 
-When reading, Comicers will automatically use the downloaded version. Manage your downloaded
-chapters and check the download queue from the `Downloads` tab.
+== Controls
+- Customize keyboard shortcuts
+- Set up mouse/touchpad controls
+- Configure navigation behavior
+- Set up auto-scroll options
 
-See the [Offline Downloading](./offline-download) page for more information.
+== Advanced Settings
+- Configure image preloading
+- Set up reading direction
+- Adjust text display
+- Configure performance options
+:::
 
-## Supporting the Project
+### Progress Tracking
+Keep track of your reading across platforms:
+1. Go to `Settings` → `Trackers`
+2. Connect your accounts:
+   - AniList
+   - MyAnimeList
+   - Kitsu
+   - Custom trackers
+3. Enable automatic progress syncing
 
-If you find Comicers useful, consider supporting the project through GitHub Sponsors. Look for the support button in the sidebar to learn more about how you can help keep Comicers free and open source.
+### Offline Reading
+Download chapters for offline access:
+1. Open a series page
+2. Click `Options` → `Download`
+3. Choose chapters to download
+4. Manage downloads from the `Downloads` tab
+
+For more details, see [Offline Downloading](./offline-download)
+
+## Advanced Features
+
+### Reading Lists
+- Create custom reading lists
+- Import/export reading progress
+- Set up reading schedules
+- Track reading statistics
+
+See [Reading List Management](./reading-list) for more information.
+
+### Experimental Features
+Try cutting-edge features in development:
+- Advanced reader modes
+- Enhanced library features
+- New tracking integrations
+- Performance improvements
+
+Learn more about [Experimental Features](./experimental-features)
+
+## Tips and Tricks
+
+:::tip
+- Use keyboard shortcuts for faster navigation
+- Enable automatic updates for the latest features
+- Back up your library regularly
+- Use tags to organize your collection
+:::
+
+:::warning
+- Keep your plugins updated
+- Check system requirements before installing
+- Back up your data before major updates
+:::
+
+## Getting Help
+
+- Check the [documentation](/)
+- Join our [Discord community](https://discord.gg/comicers)
+- Report issues on [GitHub](https://github.com/TheFizFactor/Comicers-App/issues)
+- Contact support at support@comicers.com
+
+## Supporting Comicers
+
+If you find Comicers useful, consider supporting the project:
+- Star the project on GitHub
+- Report bugs and suggest features
+- Contribute to development
+- Support through GitHub Sponsors
+
+Your support helps keep Comicers free and open source!
