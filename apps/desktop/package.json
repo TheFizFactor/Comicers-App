@@ -7,7 +7,7 @@
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
-    "build": "npm run copy-ui && electron-vite build",
+    "build": "cd ../../packages/ui && pnpm build && cd ../../apps/desktop && npm run copy-ui && electron-vite build",
     "copy-ui": "powershell -Command \"New-Item -ItemType Directory -Force -Path node_modules/@comicers/ui; Copy-Item -Force -Recurse ../../packages/ui/dist/* node_modules/@comicers/ui/\"",
     "start": "electron-vite preview",
     "dist": "npm run build && electron-builder",
