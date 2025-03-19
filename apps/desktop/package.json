@@ -74,20 +74,9 @@
       "provider": "github",
       "owner": "TheFizFactor",
       "repo": "Comicers-App",
-      "releaseType": "draft",
-      "vPrefixedTagName": true,
       "private": false,
-      "publishAutoUpdate": true,
-      "releaseNotes": "New release",
-      "verifyUpdateCodeSignature": false,
-      "uploadAssets": [
-        "dist/*.exe",
-        "dist/*.dmg",
-        "dist/*.AppImage",
-        "dist/*.deb",
-        "dist/*.rpm",
-        "dist/latest*.yml"
-      ]
+      "releaseType": "draft",
+      "vPrefixedTagName": true
     },
     "nsis": {
       "oneClick": true,
