@@ -19,13 +19,15 @@ interface ReleaseData {
 
 export async function load(): Promise<{ release: ReleaseData | null }> {
   try {
-    const { data } = await octokit.request('GET /repos/{owner}/{repo}/releases/latest', {
-      owner: 'TheFizFactor',
-      repo: 'Comicers-App'
-    })
+    const response = await fetch('https://api.github.com/repos/TheFizFactor/Comicers-App/releases/latest')
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(`GitHub API responded with ${response.status}`)
+    }
 
     // Process assets to determine platform
-    const assets = data.assets.map(asset => {
+    const assets = data.assets.map((asset: any) => {
       const assetData: Asset = {
         name: asset.name,
         browser_download_url: asset.browser_download_url,
