@@ -7,7 +7,6 @@ next: false
 import { useData } from 'vitepress'
 import { ref, onMounted } from 'vue'
 import VPButton from "vitepress/dist/client/theme-default/components/VPButton.vue"
-import * as releaseData from '@theme/data/release.data'
 
 const { theme } = useData()
 const release = ref({
@@ -21,10 +20,11 @@ const error = ref(false)
 
 onMounted(async () => {
   try {
-    release.value = await releaseData.load()
+    const releaseData = await import('@theme/data/release.data')
+    release.value = await releaseData.default.load()
   } catch (e) {
-    console.error('Failed to load release data:', e)
     error.value = true
+    console.error('Failed to load release data:', e)
   } finally {
     loading.value = false
   }
@@ -56,7 +56,7 @@ onMounted(async () => {
 
   <div class="download-section">
     <h2>Download for Your Platform</h2>
-    <table class="downloadTable" v-if="release.assets && release.assets.length">
+    <table class="downloadTable" v-if="release.assets.length">
       <thead>
         <tr>
           <th>Platform</th>

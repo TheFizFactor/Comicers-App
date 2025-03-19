@@ -1,16 +1,16 @@
 // https://vitepress.dev/guide/custom-theme
+import { h } from 'vue';
+import type { Theme } from 'vitepress';
 import DefaultTheme from 'vitepress/theme';
 import { enhanceAppWithTabs } from 'vitepress-plugin-tabs/client';
-import './styles/vars.css';
-import './styles/custom.css';
+import './style.css';
 
 export default {
-  ...DefaultTheme,
-  enhanceApp({ app, router, siteData }: { 
-    app: any, 
-    router: any, 
-    siteData: any 
-  }) {
+  extends: DefaultTheme,
+  Layout: () => {
+    return h(DefaultTheme.Layout, null, {});
+  },
+  enhanceApp({ app, router, siteData }) {
     enhanceAppWithTabs(app);
   },
-};
+} satisfies Theme;

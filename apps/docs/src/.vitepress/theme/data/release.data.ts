@@ -1,37 +1,21 @@
-// Using native fetch API
+import fetch from 'node-fetch'
+
 interface Asset {
   name: string
-  size: number
   browser_download_url: string
+  size: number
+  platform?: 'windows' | 'mac' | 'linux'
 }
 
 interface ReleaseData {
   version: string
-  releaseDate: string
+  name: string
+  publishedAt: string
+  daysAgo: number
   assets: Asset[]
 }
 
-function formatSize(bytes: number): string {
-  const units = ['B', 'KB', 'MB', 'GB']
-  let size = bytes
-  let unitIndex = 0
-  
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024
-    unitIndex++
-  }
-  
-  return `${size.toFixed(1)} ${units[unitIndex]}`
-}
-
-function getPlatformFromAsset(assetName: string): string {
-  if (assetName.includes('win32')) return 'Windows'
-  if (assetName.includes('darwin')) return 'macOS'
-  if (assetName.includes('linux')) return 'Linux'
-  return 'Unknown'
-}
-
-export async function load(): Promise<ReleaseData | null> {
+async function loadRelease(): Promise<{ release: ReleaseData | null }> {
   try {
     const response = await fetch('https://api.github.com/repos/TheFizFactor/Comicers-App/releases/latest', {
       headers: {
@@ -39,27 +23,54 @@ export async function load(): Promise<ReleaseData | null> {
         'User-Agent': 'Comicers-Docs'
       }
     })
-    
+
     if (!response.ok) {
-      throw new Error(`GitHub API request failed: ${response.statusText}`)
-    }
-    
-    const data = await response.json()
-    if (!data) {
-      throw new Error('No release data found')
+      throw new Error(`GitHub API responded with ${response.status}`)
     }
 
-    return {
-      version: data.tag_name || 'Unknown',
-      releaseDate: data.published_at ? new Date(data.published_at).toLocaleDateString() : 'Unknown',
-      assets: data.assets.map((asset: any) => ({
+    const data = await response.json()
+
+    // Process assets to determine platform
+    const assets = data.assets.map((asset: any) => {
+      const assetData: Asset = {
         name: asset.name,
-        size: asset.size,
-        browser_download_url: asset.browser_download_url
-      }))
+        browser_download_url: asset.browser_download_url,
+        size: asset.size
+      }
+
+      if (asset.name.endsWith('.exe')) {
+        assetData.platform = 'windows'
+      } else if (asset.name.endsWith('.dmg')) {
+        assetData.platform = 'mac'
+      } else if (asset.name.endsWith('.AppImage') || asset.name.endsWith('.deb') || asset.name.endsWith('.rpm')) {
+        assetData.platform = 'linux'
+      }
+
+      return assetData
+    })
+
+    // Calculate days ago
+    const publishedDate = new Date(data.published_at || Date.now())
+    const now = new Date()
+    const daysAgo = Math.floor((now.getTime() - publishedDate.getTime()) / (1000 * 60 * 60 * 24))
+
+    return {
+      release: {
+        version: data.tag_name,
+        name: data.name || `Release ${data.tag_name}`,
+        publishedAt: publishedDate.toLocaleDateString(),
+        daysAgo,
+        assets
+      }
     }
   } catch (error) {
-    console.error('Error fetching release data:', error)
-    return null
+    console.error('Failed to fetch latest release:', error)
+    return { release: null }
+  }
+}
+
+export default {
+  async load() {
+    return await loadRelease()
   }
 }

@@ -5,10 +5,7 @@ import { tabsMarkdownPlugin } from 'vitepress-plugin-tabs';
 export default defineConfig({
   title: 'Comicers',
   description: 'Free manga reader for the desktop',
-  head: [
-    ['link', { rel: 'icon', href: '/favicon.ico' }],
-    ['meta', { name: 'theme-color', content: '#7048E8' }]
-  ],
+  head: [['link', { rel: 'icon', href: '/favicon.ico' }]],
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
@@ -53,23 +50,18 @@ export default defineConfig({
     search: {
       provider: 'local',
     },
-
-    footer: {
-      message: 'Released under the Comicers License.',
-      copyright: 'Copyright © 2018-present TheFizFactor'
-    }
   },
   markdown: {
-    config: (md: any) => {
+    config(md) {
       md.use(tabsMarkdownPlugin);
     },
   },
   vite: {
     optimizeDeps: {
-      include: ['@octokit/core', '@octokit/rest']
+      include: ['@octokit/core']
     },
     ssr: {
-      noExternal: ['@octokit/core', '@octokit/rest']
+      noExternal: ['@octokit/core']
     }
   }
 });
