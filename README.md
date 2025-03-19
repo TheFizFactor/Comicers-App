@@ -4,65 +4,63 @@
 [![GitHub release](https://img.shields.io/github/v/release/TheFizFactor/Comicers-App?style=flat-square)](https://github.com/TheFizFactor/Comicers-App/releases)
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/TheFizFactor/Comicers-App/publish.yml?branch=main&style=flat-square)
 
-Comicers is a free and open source manga reader for the desktop.
+Comicers is a modern, free, and open-source manga reader for desktop platforms. It provides a seamless reading experience with support for both local and online manga sources.
 
 ## Features
 
-- Read manga from popular websites or import ones from your filesystem,
-  all in one place.
-- Download chapters for offline reading.
-- Customizable reader interface with multiple layouts and settings.
-- Tagging and filtering support to easily browse and manage large libraries.
-- Cross-platform!
+| Feature | Status | Description |
+|---------|---------|-------------|
+| Local Manga Import | ✅ | Import manga from your filesystem (zip files, image folders) |
+| Online Manga Reading | ✅ | Read manga from popular websites through Tiyo plugin |
+| Offline Reading | ✅ | Download chapters for offline access |
+| Customizable Reader | ✅ | Multiple layouts and reading settings |
+| Library Management | ✅ | Tagging and filtering system for large collections |
+| Cross-Platform | ✅ | Available for Windows, macOS, and Linux |
+| Dark/Light Mode | ✅ | Comfortable reading in any lighting condition |
+| Reading Progress | ✅ | Automatic progress tracking and bookmarking |
+| Batch Operations | ✅ | Download multiple chapters at once |
 
-## Download
+## Coming Soon
 
-Download Comicers from [the official website](https://comicers.org/download).
+| Feature | Status | Description |
+|---------|---------|-------------|
+| Cloud Sync | 🔄 | Sync your library across devices |
+| Reading Statistics | 🔄 | Track your reading habits and history |
+| Custom Themes | 🔄 | Create and share custom reader themes |
+| Advanced Search | 🔄 | Search across multiple sources simultaneously |
 
-Alternatively, you can download manually from the
-[GitHub releases page](https://github.com/TheFizFactor/Comicers-App/releases).
+## Quick Start
 
-## Documentation
-
-User guides and documentation are available on
-[comicers.org](https://comicers.org).
+1. Download from [comicers.org/download](https://comicers.org/download)
+2. Install the Tiyo plugin from the Plugins tab
+3. Start reading your favorite manga!
 
 ## Development
 
-Install dependencies:
-
-```
+```bash
+# Install dependencies
 pnpm i
-```
 
-Start the app in the dev environment:
-
-```
+# Start development server
 pnpm dev
 ```
 
-## Stack
+## Technical Stack
 
-**Application**: This is an Electron application. The majority of the functionality is performed in the renderer thread. Exceptions are for cases like accessing the window class (i.e. to support minimizing the window), locating application directories, and for working with extensions. The renderer can invoke these functions through ipc.
-
-**UI**: The interface uses React components. Most base components (text, buttons, links, etc.) use [Radix primitives](https://www.radix-ui.com/primitives) and were designed by [shadcn](https://ui.shadcn.com).
-
-**State**: [Recoil](https://recoiljs.org) is used for state management. Hooks are used for small
-non-shared behavior.
-
-**Storage**: Library data and settings are saved with `localStorage`. Thumbnails are stored in
-the user-data path.
-
-**Plugins/Extensions**: See the [Tiyo](https://github.com/TheFizFactor/tiyo) repo. Dynamic loading is handled by [aki-plugin-manager](https://github.com/TheFizFactor/aki-plugin-manager).
+- **Framework**: Electron + React
+- **UI Components**: Radix UI + shadcn
+- **State Management**: Recoil
+- **Storage**: localStorage + user-data path
+- **Plugin System**: Tiyo + aki-plugin-manager
 
 ## Content Sources
 
-Comicers allows users to import manga from their filesystem (e.g. as zip files
-or folders of images). To read manga from 3rd-party "content sources", the
-Tiyo plugin can be installed from the Plugins tab in the client.
+Comicers supports two types of content sources:
+1. Local filesystem (zip files, image folders)
+2. Online sources through the Tiyo plugin
 
-To learn about Tiyo or request a new content source, please contact me at fiz@comicers.com
+For new content source requests or Tiyo-related inquiries, contact: fiz@comicers.com
 
 ## License
 
-[MIT License](https://github.com/TheFizFactor/Comicers-App/blob/main/LICENSE.txt)
+This project is licensed under the [Comicers License](LICENSE.txt) - see the LICENSE file for details.

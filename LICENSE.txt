@@ -1,21 +1,97 @@
-MIT License
+Comicers License
 
-Copyright (c) 2018
+Copyright (c) 2018-present TheFizFactor
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This software and associated documentation files (the "Software") are protected by copyright law. The Software is provided "as is", without warranty of any kind, express or implied.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. Definitions
+   - "Software" includes all source code, object code, documentation, and associated files
+   - "Derivative Work" means any work based upon the Software, including but not limited to:
+     * Modifications
+     * Translations
+     * Adaptations
+     * Extensions
+     * Forks
+     * Ports
+   - "Commercial Use" means any use intended for or directed toward commercial advantage or monetary compensation
+   - "Personal Use" means use by an individual for their own private, non-commercial purposes
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+2. Permissions
+   Subject to the restrictions below, permission is hereby granted, free of charge, to any person obtaining a copy of this Software to:
+   a) Use the Software for personal, non-commercial purposes
+   b) Modify the Software for personal use only
+   c) Contribute to the Software's development through pull requests
+   d) Distribute the Software in its original, unmodified form
+   e) Fork the Software for personal use only
+   f) Report bugs and submit feature requests
+
+3. Restrictions
+   The following restrictions apply to all uses of the Software:
+   a) Branding and Identity
+      - You may not rebrand, rename, or claim ownership of the Software
+      - You may not use the name "Comicers" or any variations thereof in any derivative works
+      - You may not use the Software's logo, trademarks, or other identifying marks
+      - You may not present the Software as your own work
+   
+   b) Commercial Use
+      - You may not use the Software for commercial purposes
+      - You may not sell, rent, lease, or lend the Software
+      - You may not use the Software in any commercial product or service
+      - You may not accept payment or compensation for distributing the Software
+   
+   c) Derivative Works
+      - You may not create derivative works based on the Software
+      - You may not port the Software to other platforms or frameworks
+      - You may not create alternative versions or implementations
+      - You may not use the Software's code in other projects
+   
+   d) Distribution
+      - You may not distribute modified versions of the Software
+      - You may not create or distribute alternative versions
+      - You may not bundle the Software with other software
+      - You may not include the Software in software collections or distributions
+   
+   e) Legal and Attribution
+      - You may not remove or alter the copyright notice
+      - You may not remove or alter any license notices
+      - You may not use the Software in any way that suggests endorsement or affiliation with the original authors
+      - You may not use the Software in violation of any applicable laws or regulations
+
+4. Contributions
+   a) Any contributions made to the Software shall be governed by these same terms and conditions
+   b) By submitting a contribution, you agree to:
+      - Grant the original copyright holders a perpetual, worldwide, non-exclusive, royalty-free license to use, modify, and distribute your contribution
+      - Warrant that your contribution is your original work
+      - Warrant that your contribution does not violate any third-party rights
+      - Warrant that your contribution is not subject to any conflicting licenses
+   c) The original copyright holders reserve the right to:
+      - Accept or reject any contribution
+      - Modify or remove any contribution
+      - Change the terms of contribution at any time
+
+5. Termination
+   a) This license automatically terminates if you fail to comply with any of its terms
+   b) Upon termination, you must cease all use and distribution of the Software
+   c) The following sections survive termination:
+      - Section 1 (Definitions)
+      - Section 3 (Restrictions)
+      - Section 4 (Contributions)
+      - Section 6 (Disclaimer)
+      - Section 7 (Limitation of Liability)
+
+6. Disclaimer
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+7. Limitation of Liability
+   IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+8. Governing Law
+   This license shall be governed by and construed in accordance with the laws of the jurisdiction in which the copyright holder resides, without regard to its conflict of law provisions.
+
+9. Severability
+   If any provision of this license is held to be unenforceable, such provision shall be reformed only to the extent necessary to make it enforceable.
+
+10. Entire Agreement
+    This license constitutes the entire agreement between the parties concerning the subject matter hereof.
+
+For questions about this license, please contact: legal@comicers.com
