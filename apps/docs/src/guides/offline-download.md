@@ -116,6 +116,6 @@ Configure storage settings:
 
 Need help with offline reading? Check out:
 - [Getting Started Guide](./getting-started)
-- [Library Management](./library)
+- [Customization Guide](./customize)
 - [Discord Community](https://discord.gg/comicers)
 - [GitHub Issues](https://github.com/TheFizFactor/Comicers-App/issues)

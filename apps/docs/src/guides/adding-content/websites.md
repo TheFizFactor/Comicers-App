@@ -112,7 +112,7 @@ Manage content updates:
 
 Need help with online sources? Check out:
 - [Getting Started Guide](../getting-started)
-- [Plugin Development Guide](../development/plugins)
+- [Plugin Settings Guide](../customize)
 - [Discord Community](https://discord.gg/comicers)
 - [GitHub Issues](https://github.com/TheFizFactor/Comicers-App/issues)
 
