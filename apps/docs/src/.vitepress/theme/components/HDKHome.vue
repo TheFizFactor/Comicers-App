@@ -22,7 +22,7 @@ onMounted(() => {
       <h1>Free manga reader <br /> for the desktop.</h1>
       <div class="buttons">
         <VPButton href="/download" :text="`${platform ? `Download for ${platform}` : 'Download Comicers'}`"
-          theme="brand" />
+          theme="brand text-black" />
 
         <VPButton href="/guides/getting-started" text="Documentation" theme="alt" />
       </div>

@@ -6,7 +6,7 @@ hero:
   text: "Your Ultimate Desktop Manga Reader"
   tagline: Experience manga and webtoons in a beautiful, customizable environment designed for desktop
   image:
-    src: /screenshot.png
+    src: /logo_2.png
     alt: Comicers Screenshot
   actions:
     - theme: brand
