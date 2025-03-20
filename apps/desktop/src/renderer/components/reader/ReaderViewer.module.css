@@ -13,6 +13,14 @@ img {
   position: relative;
 }
 
+.page:first-child {
+  padding-top: 2rem;
+}
+
+.page:last-child {
+  padding-bottom: 2rem;
+}
+
 .page.containHeight {
   height: calc(100vh - var(--titlebar-height));
 }

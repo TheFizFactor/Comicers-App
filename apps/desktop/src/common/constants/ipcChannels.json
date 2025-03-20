@@ -5,6 +5,7 @@
     "UPDATE_AND_RESTART": "update-and-restart",
     "SEND_NOTIFICATION": "send-notification",
     "LOAD_STORED_EXTENSION_SETTINGS": "load-stored-extension-settings",
+    "LOAD_STORED_TRACKER_TOKENS": "load-stored-tracker-tokens",
     "SHOW_OPEN_DIALOG": "show-open-dialog",
     "SHOW_RESTART_UPDATE_DIALOG": "show-restart-update-dialog",
     "SHOW_PERFORM_UPDATE_DIALOG": "show-perform-update-dialog",

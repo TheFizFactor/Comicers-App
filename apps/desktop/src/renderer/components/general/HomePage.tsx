@@ -106,22 +106,39 @@ const FeaturedCard: React.FC<{
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-60 group-hover:opacity-70 transition-opacity" />
             <div className="absolute bottom-0 left-0 right-0 p-6">
-                <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center justify-between gap-2 mb-3">
                     <div className="flex items-center gap-2">
                         <Flame className="w-5 h-5 text-orange-500" />
                         <span className="text-sm font-medium text-orange-400">Featured Series</span>
                     </div>
                     <button
                         onClick={handleFavoriteClick}
-                        className="p-1 bg-background/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background"
+                        className="p-1.5 bg-background/90 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background shadow-md"
                         title={isFavorite ? "Remove from favorites" : "Add to favorites"}
                     >
                         <Heart className={`w-4 h-4 ${isFavorite ? 'text-destructive fill-current' : 'text-muted-foreground'}`} />
                     </button>
                 </div>
+                <div className="flex items-center gap-2 mb-2">
+                    {series.status && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary">
+                            {series.status}
+                        </span>
+                    )}
+                </div>
                 <h2 className="text-2xl font-bold text-white mb-2 line-clamp-2">
                     {series.title}
                 </h2>
+                {series.authors && series.authors.length > 0 && (
+                    <p className="text-sm text-white/80 mb-2">
+                        by {series.authors[0]}
+                    </p>
+                )}
+                {series.description && (
+                    <p className="text-sm text-white/70 line-clamp-2">
+                        {series.description}
+                    </p>
+                )}
             </div>
         </div>
     );
@@ -184,15 +201,27 @@ const SeriesCard: React.FC<{
                         <BookOpen className="h-6 w-6 text-muted-foreground" />
                     </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-60 group-hover:opacity-70 transition-opacity" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-60 group-hover:opacity-70 transition-opacity" />
                 <div className="absolute bottom-0 left-0 right-0 p-3">
-                    <h3 className="text-sm font-medium text-white line-clamp-2">
+                    <div className="flex items-center gap-2 mb-1">
+                        {series.status && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary">
+                                {series.status}
+                            </span>
+                        )}
+                    </div>
+                    <h3 className="text-sm font-medium text-white line-clamp-2 mb-1">
                         {series.title}
                     </h3>
+                    {series.authors && series.authors.length > 0 && (
+                        <p className="text-xs text-white/80 line-clamp-1">
+                            by {series.authors[0]}
+                        </p>
+                    )}
                 </div>
                 <button
                     onClick={handleFavoriteClick}
-                    className="absolute top-2 right-2 p-1 bg-background/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background"
+                    className="absolute top-2 right-2 p-1.5 bg-background/90 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background shadow-md"
                     title={isFavorite ? "Remove from favorites" : "Add to favorites"}
                 >
                     <Heart className={`w-4 h-4 ${isFavorite ? 'text-destructive fill-current' : 'text-muted-foreground'}`} />
@@ -210,39 +239,60 @@ const SeriesSection: React.FC<{
     icon?: React.ReactNode;
 }> = ({ title, description, series, onNavigate, icon }) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+    const totalPages = Math.ceil(series.length / itemsPerPage);
+    const displayedSeries = series.slice(0, currentPage * itemsPerPage);
+
+    const loadMore = () => {
+        if (currentPage < totalPages) {
+            setCurrentPage(prev => prev + 1);
+        }
+    };
 
     return (
         <div className="w-full">
-            <button 
-                onClick={() => setIsCollapsed(prev => !prev)}
-                className="w-full text-left group"
-            >
-                <div className="flex items-start gap-4 mb-6">
-                    <div className="flex items-center gap-4">
-                        {icon && <div className="text-primary mt-1">{icon}</div>}
-                        <div>
-                            <h2 className="text-2xl font-bold flex items-center mb-2 group-hover:text-primary transition-colors">
-                                {title}
-                                <svg 
-                                    xmlns="http://www.w3.org/2000/svg" 
-                                    className={`w-6 h-6 ml-2 transition-transform duration-200 text-muted-foreground ${isCollapsed ? '-rotate-90' : ''}`}
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path 
-                                        fill="none" 
-                                        stroke="currentColor" 
-                                        strokeLinecap="round" 
-                                        strokeLinejoin="round" 
-                                        strokeWidth="2" 
-                                        d="m6 9 6 6 6-6"
-                                    />
-                                </svg>
-                            </h2>
-                            <p className="text-base text-muted-foreground">{description}</p>
-                        </div>
+            <div className="flex items-start justify-between gap-4 mb-6">
+                <button 
+                    onClick={() => setIsCollapsed(prev => !prev)}
+                    className="flex items-center gap-4 text-left group"
+                >
+                    {icon && <div className="text-primary mt-1">{icon}</div>}
+                    <div>
+                        <h2 className="text-2xl font-bold flex items-center mb-2 group-hover:text-primary transition-colors">
+                            {title}
+                            <svg 
+                                xmlns="http://www.w3.org/2000/svg" 
+                                className={`w-6 h-6 ml-2 transition-transform duration-200 text-muted-foreground ${isCollapsed ? '-rotate-90' : ''}`}
+                                viewBox="0 0 24 24"
+                            >
+                                <path 
+                                    fill="none" 
+                                    stroke="currentColor" 
+                                    strokeLinecap="round" 
+                                    strokeLinejoin="round" 
+                                    strokeWidth="2" 
+                                    d="m6 9 6 6 6-6"
+                                />
+                            </svg>
+                        </h2>
+                        <p className="text-base text-muted-foreground">{description}</p>
                     </div>
+                </button>
+                <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">
+                        {displayedSeries.length} of {series.length}
+                    </span>
+                    {currentPage < totalPages && (
+                        <button
+                            onClick={loadMore}
+                            className="px-4 py-2 text-sm bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-colors"
+                        >
+                            Show More
+                        </button>
+                    )}
                 </div>
-            </button>
+            </div>
             <div 
                 className={`grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4 transition-all duration-300 origin-top ${
                     isCollapsed 
@@ -250,12 +300,53 @@ const SeriesSection: React.FC<{
                         : 'h-auto opacity-100 scale-100'
                 }`}
             >
-                {series.map((series, index) => (
+                {displayedSeries.map((series, index) => (
                     <div key={index} className="transition-transform duration-200 hover:scale-[1.02]">
                         <SeriesCard series={series} onNavigate={onNavigate} />
                     </div>
                 ))}
             </div>
+            {!isCollapsed && currentPage < totalPages && (
+                <div className="flex justify-center mt-6">
+                    <button
+                        onClick={loadMore}
+                        className="px-6 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-colors flex items-center gap-2"
+                    >
+                        Load More
+                        <svg 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            className="w-4 h-4" 
+                            viewBox="0 0 24 24" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            strokeWidth="2" 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round"
+                        >
+                            <path d="M12 5v14M5 12h14"/>
+                        </svg>
+                    </button>
+                </div>
+            )}
+            {!isCollapsed && displayedSeries.length > itemsPerPage && (
+                <div className="flex justify-center items-center gap-2 mt-4">
+                    <div className="flex gap-1">
+                        {Array.from({ length: totalPages }, (_, i) => (
+                            <button
+                                key={i}
+                                onClick={() => setCurrentPage(i + 1)}
+                                className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                                    currentPage === i + 1
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                                }`}
+                            >
+                                {i + 1}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -298,64 +389,6 @@ const SearchBar: React.FC<{ onSearch: (query: string) => void }> = ({ onSearch }
                         </svg>
                     </button>
                 )}
-            </div>
-        </div>
-    );
-};
-
-const CategoryFilters: React.FC<{ onSelect: (category: string) => void; selected: string }> = ({ onSelect, selected }) => {
-    // Get unique tags from all series
-    const seriesList = useRecoilValue(seriesListState);
-    const allTags = React.useMemo(() => {
-        const tags = new Set<string>();
-        seriesList.forEach(series => {
-            series.tags?.forEach(tag => tags.add(tag.toLowerCase()));
-        });
-        return Array.from(tags).sort();
-    }, [seriesList]);
-
-    // Function to get tag size class based on frequency
-    const getTagStyle = (tag: string) => {
-        const count = seriesList.filter(series => 
-            series.tags?.some(t => t.toLowerCase() === tag.toLowerCase())
-        ).length;
-        
-        // Base styles
-        const baseStyle = "inline-flex items-center justify-center m-1 px-3 py-1.5 rounded-full transition-all duration-200 cursor-pointer hover:scale-105";
-        
-        // Selected state
-        if (selected.toLowerCase() === tag.toLowerCase()) {
-            return `${baseStyle} bg-primary text-primary-foreground shadow-lg`;
-        }
-        
-        // Size variations based on frequency
-        if (count >= 10) {
-            return `${baseStyle} bg-muted/80 text-foreground text-base font-medium`;
-        } else if (count >= 5) {
-            return `${baseStyle} bg-muted/60 text-foreground/90 text-sm`;
-        } else {
-            return `${baseStyle} bg-muted/40 text-foreground/80 text-xs`;
-        }
-    };
-
-    return (
-        <div className="w-full max-w-4xl mx-auto">
-            <div className="flex flex-wrap justify-center gap-2 p-4">
-                <button
-                    onClick={() => onSelect('All')}
-                    className={`${getTagStyle('all')} ${selected === 'All' ? 'bg-primary text-primary-foreground' : 'bg-muted/90 text-foreground'} font-semibold text-base`}
-                >
-                    All
-                </button>
-                {allTags.map((tag) => (
-                    <button
-                        key={tag}
-                        onClick={() => onSelect(tag)}
-                        className={getTagStyle(tag)}
-                    >
-                        {tag}
-                    </button>
-                ))}
             </div>
         </div>
     );
@@ -527,14 +560,13 @@ export const HomePage: React.FC = () => {
     const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
     const [isQuoteVisible, setIsQuoteVisible] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState('All');
     const [filteredSeries, setFilteredSeries] = useState<SeriesWithRating[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
     const [activeTab, setActiveTab] = useState<'home' | 'history' | 'favorites'>('home');
 
-    // Filter series based on search and category
+    // Filter series based on search
     useEffect(() => {
         const allSeries = [...popularSeries, ...recommendedSeries, ...trendingSeries];
         let filtered = allSeries;
@@ -548,21 +580,13 @@ export const HomePage: React.FC = () => {
                 series.title.toLowerCase().includes(query) ||
                 series.description?.toLowerCase().includes(query) ||
                 series.authors?.some(author => author.toLowerCase().includes(query)) ||
-                series.artists?.some(artist => artist.toLowerCase().includes(query)) ||
-                series.tags?.some(tag => tag.toLowerCase().includes(query))
-            );
-        }
-
-        // Apply category filter
-        if (selectedCategory !== 'All') {
-            filtered = filtered.filter(series => 
-                series.tags?.some(tag => tag.toLowerCase() === selectedCategory.toLowerCase())
+                series.artists?.some(artist => artist.toLowerCase().includes(query))
             );
         }
 
         setFilteredSeries(filtered);
         setIsSearching(false);
-    }, [searchQuery, selectedCategory, popularSeries, recommendedSeries, trendingSeries]);
+    }, [searchQuery, popularSeries, recommendedSeries, trendingSeries]);
 
     // Cycle through quotes
     useEffect(() => {
@@ -764,10 +788,6 @@ export const HomePage: React.FC = () => {
         setSearchQuery(query);
     };
 
-    const handleCategorySelect = (category: string) => {
-        setSelectedCategory(category);
-    };
-
     return (
         <div className="flex flex-col w-full max-w-[1800px] mx-auto px-4 py-6 pb-12 space-y-12">
             {/* Welcome Banner */}
@@ -789,7 +809,7 @@ export const HomePage: React.FC = () => {
                 <QuickActions />
             </div>
 
-            {/* Search and Filters */}
+            {/* Search */}
             <div className="space-y-6 max-w-[1200px] mx-auto w-full">
                 <div className="relative">
                     <SearchBar onSearch={handleSearch} />
@@ -809,9 +829,6 @@ export const HomePage: React.FC = () => {
                             ))}
                         </div>
                     )}
-                </div>
-                <div className="w-full px-4">
-                    <CategoryFilters onSelect={handleCategorySelect} selected={selectedCategory} />
                 </div>
             </div>
 
@@ -858,7 +875,7 @@ export const HomePage: React.FC = () => {
                     {activeTab === 'home' && (
                         <>
                             {/* Search Results */}
-                            {(searchQuery || selectedCategory !== 'All') && (
+                            {searchQuery && (
                                 <>
                                     {isSearching ? (
                                         <div className="flex justify-center items-center h-[200px]">
@@ -877,7 +894,7 @@ export const HomePage: React.FC = () => {
                                             <Search className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                                             <h3 className="text-xl font-semibold mb-2">No Results Found</h3>
                                             <p className="text-muted-foreground">
-                                                Try adjusting your search or filters to find what you're looking for
+                                                Try adjusting your search to find what you're looking for
                                             </p>
                                         </div>
                                     )}
@@ -885,7 +902,7 @@ export const HomePage: React.FC = () => {
                             )}
 
                             {/* Only show other sections if not searching */}
-                            {!searchQuery && selectedCategory === 'All' && (
+                            {!searchQuery && (
                                 <>
                                     {/* Continue Reading Section */}
                                     {continueReading.length > 0 && (
@@ -909,6 +926,36 @@ export const HomePage: React.FC = () => {
                                         </div>
                                     )}
 
+                                    {/* Featured Series */}
+                                    {popularSeries.length > 0 && (
+                                        <div className="space-y-6">
+                                            <div className="flex items-start gap-4">
+                                                <Flame className="w-5 h-5 text-primary mt-1" />
+                                                <div>
+                                                    <h2 className="text-2xl font-bold mb-2">Featured Series</h2>
+                                                    <p className="text-base text-muted-foreground">Handpicked series for you</p>
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[300px]">
+                                                <div className="h-full">
+                                                    <FeaturedCard 
+                                                        series={popularSeries[0]} 
+                                                        onNavigate={handleSeriesClick}
+                                                    />
+                                                </div>
+                                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4">
+                                                    {popularSeries.slice(1, 7).map((series, index) => (
+                                                        <SeriesCard 
+                                                            key={series.id || index} 
+                                                            series={series} 
+                                                            onNavigate={handleSeriesClick}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* Recently Added Section */}
                                     <SeriesSection
                                         title="Recently Added"
@@ -918,27 +965,7 @@ export const HomePage: React.FC = () => {
                                         icon={<Clock className="w-5 h-5" />}
                                     />
 
-                                    {/* Featured Series */}
-                                    {popularSeries.length > 0 && (
-                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[300px]">
-                                            <div className="h-full">
-                                                <FeaturedCard 
-                                                    series={popularSeries[0]} 
-                                                    onNavigate={handleSeriesClick}
-                                                />
-                                            </div>
-                                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4">
-                                                {popularSeries.slice(1, 7).map((series, index) => (
-                                                    <SeriesCard 
-                                                        key={series.id || index} 
-                                                        series={series} 
-                                                        onNavigate={handleSeriesClick}
-                                                    />
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-
+                                    {/* Popular Series */}
                                     <SeriesSection
                                         title="Popular Series"
                                         description="Top rated series from all sources"
@@ -947,17 +974,19 @@ export const HomePage: React.FC = () => {
                                         icon={<Flame className="w-5 h-5" />}
                                     />
 
+                                    {/* Recommended For You */}
                                     <SeriesSection
                                         title="Recommended For You"
-                                        description="Based on your reading history"
+                                        description="Based on your reading history and preferences"
                                         series={recommendedSeries}
                                         onNavigate={handleSeriesClick}
                                         icon={<ThumbsUp className="w-5 h-5" />}
                                     />
 
+                                    {/* Trending Now */}
                                     <SeriesSection
                                         title="Trending Now"
-                                        description="What's hot right now"
+                                        description="What's hot right now across all sources"
                                         series={trendingSeries}
                                         onNavigate={handleSeriesClick}
                                         icon={<TrendingUp className="w-5 h-5" />}

@@ -56,6 +56,11 @@ export const createRendererIpcHandlers = (
   ipcRenderer.on(ipcChannels.APP.LOAD_STORED_EXTENSION_SETTINGS, () => {
     loadStoredExtensionSettings();
   });
+
+  ipcRenderer.on(ipcChannels.APP.LOAD_STORED_TRACKER_TOKENS, () => {
+    loadStoredTrackerTokens();
+  });
+
   ipcRenderer.on(ipcChannels.WINDOW.SET_FULLSCREEN, (_event, fullscreen) => {
     if (fullscreen) {
       document.getElementById('titlebar')?.classList.add('hidden');

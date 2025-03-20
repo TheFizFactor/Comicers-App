@@ -28,6 +28,7 @@ import {
   PencilIcon,
   Settings,
   Compass,
+  Plus,
   Trash2Icon,
   MessageCircle,
   ChartBar,
@@ -345,6 +346,7 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
                         className="px-3 py-2 rounded-lg hover:bg-accent/50 transition-all duration-200 ease-in-out text-sm text-muted-foreground hover:text-foreground"
                         onClick={() => setShowingNewCategoryDialog(true)}
                       >
+                        <Plus className="h-4 w-4 mr-2" />
                         <span>New category...</span>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
@@ -374,7 +376,7 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
           <SidebarMenuItem>
             <Dialog>
               <DialogTrigger asChild>
-                <SidebarMenuButton className="px-3 py-3 rounded-lg hover:bg-accent/50 transition-all duration-200 ease-in-out">
+                <SidebarMenuButton className="px-3 py-5 rounded-lg hover:bg-accent/50 transition-all duration-200 ease-in-out">
                   <Settings className="h-4 w-4" />
                   <span>Settings</span>
                 </SidebarMenuButton>

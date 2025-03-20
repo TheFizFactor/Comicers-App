@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { ExtensionMetadata, FilterOption, Series, SeriesListResponse } from '@tiyo/common';
 const { ipcRenderer } = require('electron');
 import { useRecoilState, useRecoilValue } from 'recoil';
@@ -278,6 +278,33 @@ const Search: React.FC = () => {
     yearTo: new Date().getFullYear(),
     rating: 0,
   });
+
+  // Add ref for infinite scroll
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  // Add intersection observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (first.isIntersecting && !loading && searchResult.hasMore) {
+          handleSearch(false);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentRef = loadMoreRef.current;
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+    };
+  }, [loading, searchResult.hasMore]);
 
   // Helper function to search a single provider with timeout and retries
   const searchProvider = async (extension: ExtensionMetadata | undefined, page: number, retryCount = 0) => {
@@ -951,9 +978,13 @@ const Search: React.FC = () => {
               setShowingAddModal(true);
             };
 
+            // Create a unique key that includes provider name to ensure uniqueness across different providers
+            const providerName = series.provider || extensionList.find(e => e.id === series.extensionId)?.name || 'unknown';
+            const uniqueKey = `${providerName}-${series.extensionId || 'unknown'}-${series.sourceId || 'unknown'}`;
+
             return viewMode === 'grid' ? (
               <div 
-                key={`${series.id}-${series.sourceId}`}
+                key={uniqueKey}
                 className="group relative cursor-pointer"
                 onClick={handleClick}
               >
@@ -989,7 +1020,7 @@ const Search: React.FC = () => {
               </div>
             ) : (
               <ListCard
-                key={`${series.id}-${series.sourceId}`}
+                key={uniqueKey}
                 series={series}
                 onClick={handleClick}
                 extensionList={extensionList}
@@ -997,36 +1028,13 @@ const Search: React.FC = () => {
             );
           })}
           {loading && (
-            Array.from({ length: viewMode === 'grid' ? 12 : 6 }).map((_, i) => (
-              <div key={`skeleton-${i}`} className={cn(
-                "space-y-3",
-                viewMode === 'list' && "flex gap-6 p-4 bg-muted/30 rounded-lg"
-              )}>
-                <div className={cn(
-                  "bg-muted animate-pulse rounded-lg",
-                  viewMode === 'grid' ? "aspect-[2/3] w-full" : "w-[120px] h-[180px]"
-                )} />
-                {viewMode === 'list' ? (
-                  <div className="flex-1 space-y-4">
-                    <div className="h-6 w-2/3 bg-muted animate-pulse rounded" />
-                    <div className="grid grid-cols-2 gap-4">
-                      {Array.from({ length: 4 }).map((_, j) => (
-                        <div key={j} className="h-4 w-24 bg-muted animate-pulse rounded" />
-                      ))}
-                    </div>
-                    <div className="space-y-2">
-                      <div className="h-4 w-full bg-muted animate-pulse rounded" />
-                      <div className="h-4 w-4/5 bg-muted animate-pulse rounded" />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <div className="h-4 w-[80%] bg-muted animate-pulse rounded" />
-                    <div className="h-3 w-[60%] bg-muted animate-pulse rounded" />
-                  </div>
-                )}
-              </div>
-            ))
+            <div className="col-span-full flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          )}
+          {/* Add load more trigger element */}
+          {searchResult.hasMore && !loading && (
+            <div ref={loadMoreRef} className="col-span-full h-20" />
           )}
         </div>
       </div>
